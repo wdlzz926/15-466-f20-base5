@@ -18,6 +18,9 @@ struct PlayMode : Mode {
 	virtual void draw(glm::uvec2 const &drawable_size) override;
 	void switch_camera();
 	glm::vec2 update_walker(float elapsed);
+	glm::vec2 update_car(float elapsed);
+	const float friction = 0.8f;
+	const float acceleration = 1.0f;
 
 	//----- game state -----
 
@@ -40,4 +43,5 @@ struct PlayMode : Mode {
 	} walker, car;
 
 	bool driving = true;
+	float carSpeed = 0.0f;
 };

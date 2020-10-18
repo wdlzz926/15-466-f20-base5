@@ -158,9 +158,6 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 void PlayMode::switch_camera(){
 	if (driving){
 		walker.transform->position = car.transform->position;
-		std::cout << "update walker position" << std::endl;
-		std::cout << walker.transform->position.x << std::endl;
-		std::cout << walker.camera->transform->position.x << std::endl;
 		walker.at = walkmesh->nearest_walk_point(walker.transform->position);
 	}
 	driving = !driving;
@@ -191,6 +188,36 @@ glm::vec2 PlayMode::update_walker(float elapsed){
 	return move;
 }
 
+glm::vec2 PlayMode::update_car(float elapsed){
+		//combine inputs into a move:
+		// constexpr float PlayerSpeed = 3.0f;
+		glm::vec2 move = glm::vec2(0.0f);
+		if (left.pressed && !right.pressed) move.x =-1.0f;
+		if (!left.pressed && right.pressed) move.x = 1.0f;
+		if (down.pressed && !up.pressed) carSpeed -= acceleration*elapsed;
+		if (!down.pressed && up.pressed) carSpeed += acceleration*elapsed;
+		if (abs(carSpeed) > 0)
+			carSpeed -= friction*elapsed*(carSpeed/abs(carSpeed));
+		carSpeed /= std::max(abs(carSpeed), 1.0f);
+		std::cout << carSpeed << std::endl;
+		move.y = carSpeed*elapsed;
+
+		//make it so that moving diagonally doesn't go faster:
+		// if (move != glm::vec2(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
+		glm::vec3 normal = walkmesh->to_world_smooth_normal(car.at);
+		car.transform->rotation = glm::angleAxis(glm::radians(45.0f*move.x*elapsed), normal);
+		move.x = 0.0f;
+		/*
+		glm::mat4x3 frame = camera->transform->make_local_to_parent();
+		glm::vec3 right = frame[0];
+		//glm::vec3 up = frame[1];
+		glm::vec3 forward = -frame[2];
+
+		camera->transform->position += move.x * right + move.y * forward;
+		*/
+	return move;
+}
+
 // void PlayMode::update_car(float elapsed){
 
 // }
@@ -199,7 +226,7 @@ void PlayMode::update(float elapsed) {
 	glm::vec2 move;
 	Player *target;
 	if (driving){
-		move = update_walker(elapsed);
+		move = update_car(elapsed);
 		target = &car;
 	} else {
 		move = update_walker(elapsed);
