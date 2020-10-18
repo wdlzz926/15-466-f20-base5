@@ -43,7 +43,23 @@ WalkMesh::WalkMesh(std::vector< glm::vec3 > const &vertices_, std::vector< glm::
 //project pt to the plane of triangle a,b,c and return the barycentric weights of the projected point:
 glm::vec3 barycentric_weights(glm::vec3 const &a, glm::vec3 const &b, glm::vec3 const &c, glm::vec3 const &pt) {
 	//TODO: implement!
-	return glm::vec3(0.25f, 0.25f, 0.5f);
+	glm::vec3 ab = b-a;
+	glm::vec3 ac = c-a;
+	glm::vec3 normal = glm::cross(ab, ac);
+	float d = -glm::dot(normal, a);
+	float t = (-d-glm::dot(normal, pt))/glm::dot(normal, normal);
+	glm::vec3 p = pt + normal*t;
+	float x1 = glm::dot(p-a, b-a);
+	float y1 = glm::dot(b-a, b-a);
+	float z1 = glm::dot(c-a, b-a);
+	float x2 = glm::dot(p-a, c-a);
+	float y2 = glm::dot(b-a, c-a);
+	float z2 = glm::dot(c-a, c-a);
+	float wb = (x1*z2 - x2*z1)/(y1*z2-y2*z1);
+	float wc = (-x1*y2 + x2*y1)/(y1*z2-y2*z1);
+	float wa = 1 - wb - wc;
+	return glm::vec3(wa, wb, wc);
+	// return glm::vec3(0.25f, 0.25f, 0.5f);
 }
 
 WalkPoint WalkMesh::nearest_walk_point(glm::vec3 const &world_point) const {
@@ -120,10 +136,16 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 	assert(time_);
 	auto &time = *time_;
 
-	glm::vec3 step_coords;
+	glm::vec3 step_proj;
+	glm::vec3 wv;
+	glm::vec3 const &a = vertices[start.indices.x];
+	glm::vec3 const &b = vertices[start.indices.y];
+	glm::vec3 const &c = vertices[start.indices.z];
 	{ //project 'step' into a barycentric-coordinates direction:
 		//TODO
-		step_coords = glm::vec3(0.0f);
+		step_proj = barycentric_weights(a, b, c, to_world_point(start)+step);
+		// step_coords = glm::vec3(0.0f);
+		wv = step_proj-start.weights;
 	}
 	
 	//if no edge is crossed, event will just be taking the whole step:
@@ -133,6 +155,35 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 	//figure out which edge (if any) is crossed first.
 	// set time and end appropriately.
 	//TODO
+	if (step_proj.x >= 0 && step_proj.y >= 0 && step_proj.z >= 0){
+		end.weights = step_proj;
+		time = 1.0f;
+	} else {
+		if (step_proj.x < 0){
+			time = 1.0f-abs(step_proj.x/wv.x);
+			end.weights.x = start.weights.z + wv.z*time;
+			end.weights.y = start.weights.y + wv.y*time;
+			end.indices.x = start.indices.z;
+			end.indices.y = start.indices.y;
+			end.indices.z = start.indices.x;
+		} else if (step_proj.y < 0){
+			time = 1.0f-abs(step_proj.y/wv.y);
+			end.weights.x = start.weights.x + wv.z*time;
+			end.weights.y = start.weights.z + wv.x*time;
+			end.indices.x = start.indices.x;
+			end.indices.y = start.indices.z;
+			end.indices.z = start.indices.y;
+		} else if (step_proj.z < 0){
+			time = 1.0f-abs(step_proj.z/wv.z);
+			end.weights.x = start.weights.y + wv.y*time;
+			end.weights.y = start.weights.x + wv.x*time;
+			end.indices.x = start.indices.y;
+			end.indices.y = start.indices.x;
+			end.indices.z = start.indices.z;
+		}
+		
+		end.weights.z = 0.0f;
+	}
 
 	//Remember: our convention is that when a WalkPoint is on an edge,
 	// then wp.weights.z == 0.0f (so will likely need to re-order the indices)
@@ -149,15 +200,24 @@ bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *ro
 	glm::uvec2 edge = glm::uvec2(start.indices);
 
 	//check if 'edge' is a non-boundary edge:
-	if (edge.x == edge.y /* <-- TODO: use a real check, this is just here so code compiles */) {
+	auto f = next_vertex.find(edge);
+	if (f != next_vertex.end()) {
 		//it is!
 
 		//make 'end' represent the same (world) point, but on triangle (edge.y, edge.x, [other point]):
 		//TODO
-
+		int next = f->second;
+		end.indices = glm::uvec3(start.indices.x, start.indices.y, next);
+		end.weights = start.weights;
 		//make 'rotation' the rotation that takes (start.indices)'s normal to (end.indices)'s normal:
 		//TODO
-
+		glm::vec3 a = vertices[start.indices.x];
+		glm::vec3 b = vertices[start.indices.y];
+		glm::vec3 c = vertices[start.indices.z];
+		glm::vec3 d = vertices[end.indices.z];
+		glm::vec3 old_norm = glm::cross(b-a, c-a);
+		glm::vec3 new_norm = glm::cross(a-b, d-b);
+		rotation = glm::rotation(glm::normalize(old_norm), glm::normalize(new_norm));
 		return true;
 	} else {
 		end = start;
