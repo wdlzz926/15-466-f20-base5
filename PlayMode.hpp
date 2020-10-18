@@ -16,6 +16,8 @@ struct PlayMode : Mode {
 	virtual bool handle_event(SDL_Event const &, glm::uvec2 const &window_size) override;
 	virtual void update(float elapsed) override;
 	virtual void draw(glm::uvec2 const &drawable_size) override;
+	void switch_camera();
+	glm::vec2 update_walker(float elapsed);
 
 	//----- game state -----
 
@@ -35,5 +37,7 @@ struct PlayMode : Mode {
 		Scene::Transform *transform = nullptr;
 		//camera is at player's head and will be pitched by mouse up/down motion:
 		Scene::Camera *camera = nullptr;
-	} player;
+	} walker, car;
+
+	bool driving = true;
 };
