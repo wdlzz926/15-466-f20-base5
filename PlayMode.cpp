@@ -67,6 +67,8 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 	car.at = walkmesh->nearest_walk_point(car.transform->position);
 
 	scene.transforms.emplace_back();
+	walker.transform = &scene.transforms.back();
+	scene.transforms.emplace_back();
 	scene.cameras.emplace_back(&scene.transforms.back());
 	walker.camera = &scene.cameras.back();
 	walker.camera->fovy = glm::radians(60.0f);
@@ -155,7 +157,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 
 void PlayMode::switch_camera(){
 	if (driving){
-		walker.transform = car.transform;
+		walker.transform->position = car.transform->position;
 		std::cout << "update walker position" << std::endl;
 		std::cout << walker.transform->position.x << std::endl;
 		std::cout << walker.camera->transform->position.x << std::endl;
