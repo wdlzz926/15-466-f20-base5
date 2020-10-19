@@ -127,26 +127,27 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		} else if (evt.key.keysym.sym == SDLK_f) {
 			switch_camera();
 		}
-	} else if (evt.type == SDL_MOUSEBUTTONDOWN) {
+	} 
+	else if (evt.type == SDL_MOUSEBUTTONDOWN) {
 		if (SDL_GetRelativeMouseMode() == SDL_FALSE) {
 			SDL_SetRelativeMouseMode(SDL_TRUE);
 			return true;
 		}
 	} else if (evt.type == SDL_MOUSEMOTION) {
-		if (SDL_GetRelativeMouseMode() == SDL_TRUE) {
+		if (SDL_GetRelativeMouseMode() == SDL_TRUE && !driving) {
 			glm::vec2 motion = glm::vec2(
 				evt.motion.xrel / float(window_size.y),
 				-evt.motion.yrel / float(window_size.y)
 			);
-			glm::vec3 up = walkmesh->to_world_smooth_normal(car.at);
-			car.transform->rotation = glm::angleAxis(-motion.x * car.camera->fovy, up) * car.transform->rotation;
+			glm::vec3 up = walkmesh->to_world_smooth_normal(walker.at);
+			walker.transform->rotation = glm::angleAxis(-motion.x * walker.camera->fovy, up) * walker.transform->rotation;
 
-			float pitch = glm::pitch(car.camera->transform->rotation);
-			pitch += motion.y * car.camera->fovy;
-			//camera looks down -z (basically at the car's feet) when pitch is at zero.
+			float pitch = glm::pitch(walker.camera->transform->rotation);
+			pitch += motion.y * walker.camera->fovy;
+			//camera looks down -z (basically at the walker's feet) when pitch is at zero.
 			pitch = std::min(pitch, 0.95f * 3.1415926f);
 			pitch = std::max(pitch, 0.05f * 3.1415926f);
-			car.camera->transform->rotation = glm::angleAxis(pitch, glm::vec3(1.0f, 0.0f, 0.0f));
+			walker.camera->transform->rotation = glm::angleAxis(pitch, glm::vec3(1.0f, 0.0f, 0.0f));
 
 			return true;
 		}
@@ -159,6 +160,9 @@ void PlayMode::switch_camera(){
 	if (driving){
 		walker.transform->position = car.transform->position;
 		walker.at = walkmesh->nearest_walk_point(walker.transform->position);
+	} else {
+		if (glm::distance(walker.transform->position, car.transform->position) > enterDis)
+			return;
 	}
 	driving = !driving;
 }
@@ -192,20 +196,21 @@ glm::vec2 PlayMode::update_car(float elapsed){
 		//combine inputs into a move:
 		// constexpr float PlayerSpeed = 3.0f;
 		glm::vec2 move = glm::vec2(0.0f);
-		if (left.pressed && !right.pressed) move.x =-1.0f;
-		if (!left.pressed && right.pressed) move.x = 1.0f;
+		if (left.pressed && !right.pressed) move.x = 1.0f;
+		if (!left.pressed && right.pressed) move.x = -1.0f;
 		if (down.pressed && !up.pressed) carSpeed -= acceleration*elapsed;
 		if (!down.pressed && up.pressed) carSpeed += acceleration*elapsed;
 		if (abs(carSpeed) > 0)
 			carSpeed -= friction*elapsed*(carSpeed/abs(carSpeed));
-		carSpeed /= std::max(abs(carSpeed), 1.0f);
-		std::cout << carSpeed << std::endl;
+		carSpeed /= std::max(abs(carSpeed)/2, 1.0f);
+		// std::cout << carSpeed << std::endl;
 		move.y = carSpeed*elapsed;
 
 		//make it so that moving diagonally doesn't go faster:
 		// if (move != glm::vec2(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
 		glm::vec3 normal = walkmesh->to_world_smooth_normal(car.at);
-		car.transform->rotation = glm::angleAxis(glm::radians(45.0f*move.x*elapsed), normal);
+		car.transform->rotation = glm::angleAxis(glm::radians(45.0f*move.x*elapsed), normal) * car.transform->rotation;
+	
 		move.x = 0.0f;
 		/*
 		glm::mat4x3 frame = camera->transform->make_local_to_parent();
@@ -234,6 +239,7 @@ void PlayMode::update(float elapsed) {
 	}
 	
 	//get move in world coordinate system:
+	// glm::vec3 current_norm = walkmesh->to_world_smooth_normal(target->at);
 		glm::vec3 remain = target->transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
 
 		//using a for() instead of a while() here so that if walkpoint gets stuck in
@@ -285,14 +291,16 @@ void PlayMode::update(float elapsed) {
 
 		//update car's position to respect walking:
 		target->transform->position = walkmesh->to_world_point(target->at);
-
+	
 		{ //update car's rotation to respect local (smooth) up-vector:
 			
 			glm::quat adjust = glm::rotation(
 				target->transform->rotation * glm::vec3(0.0f, 0.0f, 1.0f), //current up vector
+				// current_norm,
 				walkmesh->to_world_smooth_normal(target->at) //smoothed up vector at walk location
 			);
 			target->transform->rotation = glm::normalize(adjust * target->transform->rotation);
+		
 		}
 	//reset button press counters:
 	left.downs = 0;

@@ -19,8 +19,9 @@ struct PlayMode : Mode {
 	void switch_camera();
 	glm::vec2 update_walker(float elapsed);
 	glm::vec2 update_car(float elapsed);
-	const float friction = 0.8f;
-	const float acceleration = 1.0f;
+	const float friction = 1.5f;
+	const float acceleration = 2.0f;
+	const float enterDis = 3.0f;
 
 	//----- game state -----
 
