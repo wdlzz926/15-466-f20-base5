@@ -1,3 +1,6 @@
+// For view related contexts
+#include "View.hpp"
+
 //Mode.hpp declares the "Mode::current" static member variable, which is used to decide where event-handling, updating, and drawing events go:
 #include "Mode.hpp"
 
@@ -98,9 +101,6 @@ int main(int argc, char **argv) {
 	//------------ load assets --------------
 	call_load_functions();
 
-	//------------ create game mode + make current --------------
-	Mode::set_current(std::make_shared< PlayMode >());
-
 	//------------ main loop ------------
 
 	//this inline function will be called whenever the window is resized,
@@ -115,8 +115,12 @@ int main(int argc, char **argv) {
 		SDL_GL_GetDrawableSize(window, &w, &h);
 		drawable_size = glm::uvec2(w, h);
 		glViewport(0, 0, drawable_size.x, drawable_size.y);
+		view::ViewContext::set(window_size, drawable_size);
 	};
 	on_resize();
+
+	//------------ create game mode + make current --------------
+	Mode::set_current(std::make_shared< PlayMode >());
 
 	//This will loop until the current mode is set to null:
 	while (Mode::current) {
@@ -170,7 +174,7 @@ int main(int argc, char **argv) {
 		}
 
 		{ //(3) call the current mode's "draw" function to produce output:
-		
+
 			Mode::current->draw(drawable_size);
 		}
 
