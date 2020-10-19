@@ -179,6 +179,7 @@ private:
 	}
 };
 
+using TextSpanPtr = std::shared_ptr<TextSpan>;
 
 /**
  * @deprecated
