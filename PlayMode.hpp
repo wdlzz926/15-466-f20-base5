@@ -24,6 +24,8 @@ struct PlayMode : Mode {
 	const float friction = 1.5f;
 	const float acceleration = 2.0f;
 	const float enterDis = 3.0f;
+	std::shared_ptr<view::TextSpan> mytext;
+
 
 	//----- game state -----
 

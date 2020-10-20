@@ -15,13 +15,13 @@
 
 GLuint phonebank_meshes_for_lit_color_texture_program = 0;
 Load< MeshBuffer > phonebank_meshes(LoadTagDefault, []() -> MeshBuffer const * {
-	MeshBuffer const *ret = new MeshBuffer(data_path("phone-bank.pnct"));
+	MeshBuffer const *ret = new MeshBuffer(data_path("delivery.pnct"));
 	phonebank_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
 	return ret;
 });
 
 Load< Scene > phonebank_scene(LoadTagDefault, []() -> Scene const * {
-	return new Scene(data_path("phone-bank.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
+	return new Scene(data_path("delivery.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
 		Mesh const &mesh = phonebank_meshes->lookup(mesh_name);
 
 		scene.drawables.emplace_back(transform);
@@ -38,9 +38,11 @@ Load< Scene > phonebank_scene(LoadTagDefault, []() -> Scene const * {
 });
 
 WalkMesh const *walkmesh = nullptr;
+WalkMesh const *carmesh = nullptr;
 Load< WalkMeshes > phonebank_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
-	WalkMeshes *ret = new WalkMeshes(data_path("phone-bank.w"));
+	WalkMeshes *ret = new WalkMeshes(data_path("delivery.w"));
 	walkmesh = &ret->lookup("WalkMesh");
+	carmesh = &ret->lookup("ZMesh");
 	return ret;
 });
 
@@ -82,6 +84,9 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 			transform.parent = car.transform;
 		}
 	}
+
+	mytext = std::make_shared<view::TextSpan>();
+	mytext->set_text("aaaa").set_position(500, 680).set_visibility(true);
 
 }
 
@@ -232,7 +237,7 @@ glm::vec2 PlayMode::update_car(float elapsed){
 
 		//make it so that moving diagonally doesn't go faster:
 		// if (move != glm::vec2(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
-		glm::vec3 normal = walkmesh->to_world_smooth_normal(car.at);
+		glm::vec3 normal = carmesh->to_world_smooth_normal(car.at);
 		car.transform->rotation = glm::angleAxis(glm::radians(45.0f*move.x*elapsed), normal) * car.transform->rotation;
 	
 		move.x = 0.0f;
