@@ -246,8 +246,10 @@ bool OrderSideBarView::handle_keypress(SDL_Keycode key) {
 }
 
 std::pair<int, int> OrderSideBarView::get_focus() const { return {current_hover_panel_, current_hover_item_}; }
-void OrderSideBarView::set_total_income(int value) {
 
+void OrderSideBarView::set_total_income(int value) {
+	total_income_ = value;
+	total_income_label_->set_text("Total Income: $" + std::to_string(total_income_));
 }
 
 }

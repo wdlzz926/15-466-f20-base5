@@ -57,6 +57,7 @@ void OrderController::deliver_order(Location client) {
 }
 void OrderController::add_income(int delta) {
 	current_income_ += delta;
+	view->set_total_income(current_income_);
 }
 
 void OrderController::update(float elapsed) {
