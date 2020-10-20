@@ -55,3 +55,24 @@ void OrderController::deliver_order(Location client) {
 void OrderController::add_income(int delta) {
 	current_income_ += delta;
 }
+
+void OrderController::update(float elapsed) {
+	for (auto it = pending_orders_.begin(); it!=pending_orders_.end();) {
+		it->remaining_time -= elapsed;
+		if (it->remaining_time <= 0) {
+			it = pending_orders_.erase(it);
+		} else {
+			it++;
+		}
+	}
+	for (auto it = accepted_orders_.begin(); it!=accepted_orders_.end();) {
+		it->remaining_time -= elapsed;
+		if (it->remaining_time <= 0) {
+			it = accepted_orders_.erase(it);
+		} else {
+			it++;
+		}
+	}
+	view->set_pending_orders(pending_orders_);
+	view->set_accepted_orders(accepted_orders_);
+}

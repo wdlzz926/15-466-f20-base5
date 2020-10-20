@@ -237,6 +237,7 @@ glm::vec2 PlayMode::update_car(float elapsed){
 // }
 
 void PlayMode::update(float elapsed) {
+	order_controller->update(elapsed);
 	glm::vec2 move;
 	Player *target;
 	if (driving){

@@ -26,13 +26,14 @@ private:
 	Order order_;
 	bool is_expanded_ = false;
 	bool has_focus_ = false;
-	TextSpanPtr from_label_;
-	TextSpanPtr store_label_;
-	TextSpanPtr to_label_;
-	TextSpanPtr client_label_;
-	TextSpanPtr remaining_time_;
-	TextSpanPtr income_;
-	TextSpanPtr focus_indicator_;
+	TextSpanPtr from_label_ = std::make_shared<TextSpan>();
+	TextSpanPtr store_label_ = std::make_shared<TextSpan>();
+	TextSpanPtr to_label_ = std::make_shared<TextSpan>();
+	TextSpanPtr client_label_ = std::make_shared<TextSpan>();
+	TextSpanPtr remaining_time_ = std::make_shared<TextSpan>();
+	TextSpanPtr income_ = std::make_shared<TextSpan>();
+	TextSpanPtr is_delivering_label_ = std::make_shared<TextSpan>();
+	TextSpanPtr focus_indicator_ = std::make_shared<TextSpan>();
 };
 
 class OrderSideBarView {
@@ -40,6 +41,7 @@ public:
 	OrderSideBarView();
 	void set_pending_orders(const std::vector<Order> &pending_orders);
 	void set_accepted_orders(const std::vector<Order> &accepted_orders);
+	void set_total_income(int value);
 	void draw();
 	void redo_render();
 	bool handle_keypress(SDL_Keycode key);
@@ -49,10 +51,13 @@ public:
 private:
 	static constexpr int HEADER_FONT_SIZE = 32;
 	static int get_orders_view_height(const std::vector<OrderItemView> &orders_view);
+	TextSpanPtr total_income_label_;
 	TextSpanPtr pending_order_label_;
+	TextSpanPtr pending_order_prompt_;
 	std::vector<OrderItemView> pending_orders_;
 	TextSpanPtr accepted_order_label_;
 	std::vector<OrderItemView> accepted_orders_;
+	int total_income_ = 0;
 
 	// current_hover_panel_: 0 means pending order panel is in hover state
 	// 1 means accepted order panel is in hover state
