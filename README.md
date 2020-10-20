@@ -14,7 +14,7 @@ Move with W,A,S,D. Select
 
 Sources: 
 Road, grass and house parts by Jim McCann from city.blend
-Cake and pancake model by Yixin He from brunch.blend
+Cake ,pancake and table model by Yixin He from brunch.blend
 Car model from https://kenney.nl/assets/car-kit
 
 - C++ Library: https://github.com/effolkronium/random
