@@ -174,16 +174,16 @@ void PlayMode::update_order(){
 		playerLocation = car.transform->position;
 	else
 		playerLocation = walker.transform->position;
-	std::vector<Order> acceptedOrders = order_controller.accepted_orders_;
+	std::vector<Order> acceptedOrders = order_controller->accepted_orders_;
 	for (Order o : acceptedOrders){
 		if (o.is_delivering){
 			if (glm::distance(playerLocation, get_location_position(o.client)) < enterDis){
-				order_controller.deliver_order(o.client);
+				order_controller->deliver_order(o.client);
 				std::cout << "deliver order" << std::endl;
 			}
 		} else {
 			if (glm::distance(playerLocation, get_location_position(o.store)) < enterDis){
-				order_controller.pickup_order(o.store);
+				order_controller->pickup_order(o.store);
 				std::cout << "pickup order" << std::endl;
 			}
 		}
@@ -222,7 +222,24 @@ glm::vec2 PlayMode::update_walker(float elapsed){
 		button_hint->set_text("");
 	}
 
-
+	glm::vec3 playerLocation;
+	if (driving)
+		playerLocation = car.transform->position;
+	else
+		playerLocation = walker.transform->position;
+	std::vector<Order> acceptedOrders = order_controller->accepted_orders_;
+	button_hint->set_text("");
+	for (Order o : acceptedOrders){
+		if (o.is_delivering){
+			if (glm::distance(playerLocation, get_location_position(o.client)) < enterDis){
+				button_hint->set_text("Press E to deliver order(s).");
+			}
+		} else {
+			if (glm::distance(playerLocation, get_location_position(o.store)) < enterDis){
+				button_hint->set_text("Press E to pickup order(s).");
+			}
+		}
+	}
 
 	return move;
 }
@@ -256,7 +273,7 @@ glm::vec2 PlayMode::update_car(float elapsed){
 		camera->transform->position += move.x * right + move.y * forward;
 		*/
 	
-	if (abs(car_speed) < 0.001f){
+	if (abs(car_speed) < 0.1f){
 		button_hint->set_text("Press F to get out of car.");
 	} else {
 		button_hint->set_text("");
