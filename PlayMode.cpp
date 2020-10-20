@@ -215,11 +215,9 @@ glm::vec2 PlayMode::update_walker(float elapsed){
 
 	//make it so that moving diagonally doesn't go faster:
 	if (move != glm::vec2(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
-
+	button_hint->set_text("");
 	if (glm::distance(walker.transform->position, car.transform->position) <= enter_dis){
 		button_hint->set_text("Press F to enter car.");
-	} else {
-		button_hint->set_text("");
 	}
 
 	glm::vec3 playerLocation;
@@ -228,7 +226,7 @@ glm::vec2 PlayMode::update_walker(float elapsed){
 	else
 		playerLocation = walker.transform->position;
 	std::vector<Order> acceptedOrders = order_controller->accepted_orders_;
-	button_hint->set_text("");
+	
 	for (Order o : acceptedOrders){
 		if (o.is_delivering){
 			if (glm::distance(playerLocation, get_location_position(o.client)) < enter_dis){
@@ -262,7 +260,7 @@ glm::vec2 PlayMode::update_car(float elapsed){
 		
 		glm::vec3 normal = walkmesh->to_world_smooth_normal(car.at);
 		if (move.y != 0){
-			move.x = abs(move.y)*glm::tan(glm::radians(45.0f*move.x*elapsed));
+			move.x = abs(move.y)*glm::tan(glm::radians(turn_speed*move.x*elapsed));
 			car.transform->rotation = glm::angleAxis(glm::atan(move.x/move.y), normal) * car.transform->rotation;
 		}else
 			move.x = 0.0f;
@@ -388,6 +386,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 	}
 	
 	button_hint->draw();
+	/*
 	{ //use DrawLines to overlay some text:
 		glDisable(GL_DEPTH_TEST);
 		float aspect = float(drawable_size.x) / float(drawable_size.y);
@@ -409,6 +408,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 			glm::u8vec4(0xff, 0xff, 0xff, 0x00));
 	}
+	*/
 	order_controller->draw();
 	GL_ERRORS();
 }

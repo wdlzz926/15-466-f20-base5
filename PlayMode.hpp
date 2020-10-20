@@ -23,8 +23,9 @@ struct PlayMode : Mode {
 	glm::vec2 update_car(float elapsed);
 	const float friction = 1.5f;
 	const float acceleration = 2.0f;
-	const float enter_dis = 3.0f;
+	const float enter_dis = 1.0f;
 	const float max_speed = 5.0f;
+	const float turn_speed = 30.0f;
 	std::shared_ptr<view::TextSpan> button_hint;
 
 
