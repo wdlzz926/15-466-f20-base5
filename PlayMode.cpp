@@ -85,7 +85,7 @@ PlayMode::PlayMode() : scene(*delivery_scene) {
 	}
 
 	button_hint = std::make_shared<view::TextSpan>();
-	button_hint->set_text("").set_position(500, 650).set_visibility(true);
+	button_hint->set_text("").set_position(550, 650).set_visibility(true);
 
 }
 
