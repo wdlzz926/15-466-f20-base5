@@ -177,12 +177,12 @@ void PlayMode::update_order(){
 	std::vector<Order> acceptedOrders = order_controller->accepted_orders_;
 	for (Order o : acceptedOrders){
 		if (o.is_delivering){
-			if (glm::distance(playerLocation, get_location_position(o.client)) < enterDis){
+			if (glm::distance(playerLocation, get_location_position(o.client)) < enter_dis){
 				order_controller->deliver_order(o.client);
 				std::cout << "deliver order" << std::endl;
 			}
 		} else {
-			if (glm::distance(playerLocation, get_location_position(o.store)) < enterDis){
+			if (glm::distance(playerLocation, get_location_position(o.store)) < enter_dis){
 				order_controller->pickup_order(o.store);
 				std::cout << "pickup order" << std::endl;
 			}
@@ -196,7 +196,7 @@ void PlayMode::switch_camera(){
 		walkmesh = &(delivery_walkmeshes->lookup("WalkMesh"));
 		walker.at = walkmesh->nearest_walk_point(walker.transform->position);
 	} else {
-		if (glm::distance(walker.transform->position, car.transform->position) > enterDis)
+		if (glm::distance(walker.transform->position, car.transform->position) > enter_dis)
 			return;
 		walkmesh = &(delivery_walkmeshes->lookup("ZMesh"));
 	}
@@ -206,7 +206,7 @@ void PlayMode::switch_camera(){
 
 glm::vec2 PlayMode::update_walker(float elapsed){
 	//combine inputs into a move:
-	constexpr float PlayerSpeed = 3.0f;
+	constexpr float PlayerSpeed = 1.0f;
 	glm::vec2 move = glm::vec2(0.0f);
 	if (left.pressed && !right.pressed) move.x =-1.0f;
 	if (!left.pressed && right.pressed) move.x = 1.0f;
@@ -216,7 +216,7 @@ glm::vec2 PlayMode::update_walker(float elapsed){
 	//make it so that moving diagonally doesn't go faster:
 	if (move != glm::vec2(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
 
-	if (glm::distance(walker.transform->position, car.transform->position) <= enterDis){
+	if (glm::distance(walker.transform->position, car.transform->position) <= enter_dis){
 		button_hint->set_text("Press F to enter car.");
 	} else {
 		button_hint->set_text("");
@@ -231,11 +231,11 @@ glm::vec2 PlayMode::update_walker(float elapsed){
 	button_hint->set_text("");
 	for (Order o : acceptedOrders){
 		if (o.is_delivering){
-			if (glm::distance(playerLocation, get_location_position(o.client)) < enterDis){
+			if (glm::distance(playerLocation, get_location_position(o.client)) < enter_dis){
 				button_hint->set_text("Press E to deliver order(s).");
 			}
 		} else {
-			if (glm::distance(playerLocation, get_location_position(o.store)) < enterDis){
+			if (glm::distance(playerLocation, get_location_position(o.store)) < enter_dis){
 				button_hint->set_text("Press E to pickup order(s).");
 			}
 		}
@@ -254,24 +254,18 @@ glm::vec2 PlayMode::update_car(float elapsed){
 		if (!down.pressed && up.pressed) car_speed += acceleration*elapsed;
 		if (abs(car_speed) > 0)
 			car_speed -= friction*elapsed*(car_speed/abs(car_speed));
-		car_speed /= std::max(abs(car_speed)/2, 1.0f);
+		car_speed /= std::max(abs(car_speed)/max_speed, 1.0f);
 		// std::cout << car_speed << std::endl;
 		move.y = car_speed*elapsed;
 
 		//make it so that moving diagonally doesn't go faster:
-		// if (move != glm::vec2(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
+		
 		glm::vec3 normal = walkmesh->to_world_smooth_normal(car.at);
-		car.transform->rotation = glm::angleAxis(glm::radians(45.0f*move.x*elapsed), normal) * car.transform->rotation;
-	
-		move.x = 0.0f;
-		/*
-		glm::mat4x3 frame = camera->transform->make_local_to_parent();
-		glm::vec3 right = frame[0];
-		//glm::vec3 up = frame[1];
-		glm::vec3 forward = -frame[2];
-
-		camera->transform->position += move.x * right + move.y * forward;
-		*/
+		if (move.y != 0){
+			move.x = abs(move.y)*glm::tan(glm::radians(45.0f*move.x*elapsed));
+			car.transform->rotation = glm::angleAxis(glm::atan(move.x/move.y), normal) * car.transform->rotation;
+		}else
+			move.x = 0.0f;
 	
 	if (abs(car_speed) < 0.1f){
 		button_hint->set_text("Press F to get out of car.");
@@ -300,7 +294,6 @@ void PlayMode::update(float elapsed) {
 	//get move in world coordinate system:
 	// glm::vec3 current_norm = walkmesh->to_world_smooth_normal(target->at);
 	glm::vec3 remain = target->transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
-
 	//using a for() instead of a while() here so that if walkpoint gets stuck in
 	// some awkward case, code will not infinite loop:
 	for (uint32_t iter = 0; iter < 10; ++iter) {

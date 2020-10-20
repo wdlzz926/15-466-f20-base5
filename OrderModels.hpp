@@ -7,7 +7,8 @@ enum class Location {
     STORE1,
     STORE2,
     CLIENT1,
-    CLIENT2
+    CLIENT2,
+    CLIENT3
 };
 
 glm::vec3 get_location_position(Location loc);
