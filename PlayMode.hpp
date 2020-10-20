@@ -2,6 +2,7 @@
 
 #include "Scene.hpp"
 #include "WalkMesh.hpp"
+#include "OrderController.hpp"
 
 #include <glm/glm.hpp>
 
@@ -45,4 +46,6 @@ struct PlayMode : Mode {
 
 	bool driving = true;
 	float carSpeed = 0.0f;
+
+	OrderController order_controller;
 };
