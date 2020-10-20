@@ -85,7 +85,7 @@ PlayMode::PlayMode() : scene(*delivery_scene) {
 	}
 
 	button_hint = std::make_shared<view::TextSpan>();
-	button_hint->set_text("").set_position(500, 650).set_visibility(true);
+	button_hint->set_text("").set_position(550, 650).set_visibility(true);
 
 }
 
@@ -177,14 +177,12 @@ void PlayMode::update_order(){
 	std::vector<Order> acceptedOrders = order_controller->accepted_orders_;
 	for (Order o : acceptedOrders){
 		if (o.is_delivering){
-			if (glm::distance(playerLocation, get_location_position(o.client)) < enter_dis){
+			if (glm::distance(playerLocation, get_location_position(o.client)) < order_dis){
 				order_controller->deliver_order(o.client);
-				std::cout << "deliver order" << std::endl;
 			}
 		} else {
-			if (glm::distance(playerLocation, get_location_position(o.store)) < enter_dis){
+			if (glm::distance(playerLocation, get_location_position(o.store)) < order_dis){
 				order_controller->pickup_order(o.store);
-				std::cout << "pickup order" << std::endl;
 			}
 		}
 	}
@@ -229,11 +227,11 @@ glm::vec2 PlayMode::update_walker(float elapsed){
 	
 	for (Order o : acceptedOrders){
 		if (o.is_delivering){
-			if (glm::distance(playerLocation, get_location_position(o.client)) < enter_dis){
+			if (glm::distance(playerLocation, get_location_position(o.client)) < order_dis){
 				button_hint->set_text("Press E to deliver order(s).");
 			}
 		} else {
-			if (glm::distance(playerLocation, get_location_position(o.store)) < enter_dis){
+			if (glm::distance(playerLocation, get_location_position(o.store)) < order_dis){
 				button_hint->set_text("Press E to pickup order(s).");
 			}
 		}
@@ -243,8 +241,6 @@ glm::vec2 PlayMode::update_walker(float elapsed){
 }
 
 glm::vec2 PlayMode::update_car(float elapsed){
-		//combine inputs into a move:
-		// constexpr float PlayerSpeed = 3.0f;
 		glm::vec2 move = glm::vec2(0.0f);
 		if (left.pressed && !right.pressed) move.x = 1.0f;
 		if (!left.pressed && right.pressed) move.x = -1.0f;
@@ -253,10 +249,8 @@ glm::vec2 PlayMode::update_car(float elapsed){
 		if (abs(car_speed) > 0)
 			car_speed -= friction*elapsed*(car_speed/abs(car_speed));
 		car_speed /= std::max(abs(car_speed)/max_speed, 1.0f);
-		// std::cout << car_speed << std::endl;
 		move.y = car_speed*elapsed;
 
-		//make it so that moving diagonally doesn't go faster:
 		
 		glm::vec3 normal = walkmesh->to_world_smooth_normal(car.at);
 		if (move.y != 0){
@@ -290,7 +284,6 @@ void PlayMode::update(float elapsed) {
 	}
 	
 	//get move in world coordinate system:
-	// glm::vec3 current_norm = walkmesh->to_world_smooth_normal(target->at);
 	glm::vec3 remain = target->transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
 	//using a for() instead of a while() here so that if walkpoint gets stuck in
 	// some awkward case, code will not infinite loop:
@@ -368,7 +361,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 	glUseProgram(lit_color_texture_program->program);
 	glUniform1i(lit_color_texture_program->LIGHT_TYPE_int, 1);
 	glUniform3fv(lit_color_texture_program->LIGHT_DIRECTION_vec3, 1, glm::value_ptr(glm::vec3(0.0f, 0.0f,-1.0f)));
-	glUniform3fv(lit_color_texture_program->LIGHT_ENERGY_vec3, 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 0.95f)));
+	glUniform3fv(lit_color_texture_program->LIGHT_ENERGY_vec3, 1, glm::value_ptr(glm::vec3(1.2f, 1.2f, 1.2f)));
 	glUseProgram(0);
 
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
@@ -386,29 +379,6 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 	}
 	
 	button_hint->draw();
-	/*
-	{ //use DrawLines to overlay some text:
-		glDisable(GL_DEPTH_TEST);
-		float aspect = float(drawable_size.x) / float(drawable_size.y);
-		DrawLines lines(glm::mat4(
-			1.0f / aspect, 0.0f, 0.0f, 0.0f,
-			0.0f, 1.0f, 0.0f, 0.0f,
-			0.0f, 0.0f, 1.0f, 0.0f,
-			0.0f, 0.0f, 0.0f, 1.0f
-		));
-
-		constexpr float H = 0.09f;
-		lines.draw_text("Mouse motion looks; WASD moves; escape ungrabs mouse",
-			glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0),
-			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
-			glm::u8vec4(0x00, 0x00, 0x00, 0x00));
-		float ofs = 2.0f / drawable_size.y;
-		lines.draw_text("Mouse motion looks; WASD moves; escape ungrabs mouse",
-			glm::vec3(-aspect + 0.1f * H + ofs, -1.0 + + 0.1f * H + ofs, 0.0),
-			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
-			glm::u8vec4(0xff, 0xff, 0xff, 0x00));
-	}
-	*/
 	order_controller->draw();
 	GL_ERRORS();
 }

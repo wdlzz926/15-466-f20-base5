@@ -45,20 +45,13 @@ glm::vec3 barycentric_weights(glm::vec3 const &a, glm::vec3 const &b, glm::vec3 
 	//TODO: implement!
 	glm::vec3 ab = b-a;
 	glm::vec3 ac = c-a;
-	glm::vec3 normal = glm::cross(ab, ac);
-	float d = -glm::dot(normal, a);
-	float t = (-d-glm::dot(normal, pt))/glm::dot(normal, normal);
-	glm::vec3 p = pt + normal*t;
-	float x1 = glm::dot(p-a, b-a);
-	float y1 = glm::dot(b-a, b-a);
-	float z1 = glm::dot(c-a, b-a);
-	float x2 = glm::dot(p-a, c-a);
-	float y2 = glm::dot(b-a, c-a);
-	float z2 = glm::dot(c-a, c-a);
-	float wb = (x1*z2 - x2*z1)/(y1*z2-y2*z1);
-	float wc = (-x1*y2 + x2*y1)/(y1*z2-y2*z1);
-	float wa = 1 - wb - wc;
-	return glm::vec3(wa, wb, wc);
+	glm::vec3 n = glm::vec3(ab.y*ac.z-ab.z*ac.y, ac.x*ab.z-ab.x*ac.z, ab.x*ac.y-ab.y*ac.x);
+	float d = -(n.x*a.x+n.y*a.y+n.z*a.z);
+	float t = -(n.x*pt.x+n.y*pt.y+n.z*pt.z+d)/(n.x*n.x+n.y*n.y+n.z*n.z);
+	glm::vec3 proj = glm::vec3(pt.x+n.x*t, pt.y+n.y*t, pt.z+n.z*t);
+	glm::mat3 equation = glm::mat3(glm::vec3(a.x,a.y,a.z),glm::vec3(b.x,b.y,b.z),glm::vec3(c.x,c.y,c.z));
+	glm::vec3 res = glm::inverse(equation)*proj;
+	return res;
 	// return glm::vec3(0.25f, 0.25f, 0.5f);
 }
 
