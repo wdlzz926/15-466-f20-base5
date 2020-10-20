@@ -42,5 +42,5 @@ Location get_random_store() {
 }
 
 Location get_random_client() {
-	return Random::get({Location::CLIENT1, Location::CLIENT2});
+	return Random::get({Location::CLIENT1, Location::CLIENT2, Location::CLIENT3});
 }
