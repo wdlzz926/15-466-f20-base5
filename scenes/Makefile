@@ -3,7 +3,7 @@
 #n.b. the '-y' sets autoexec scripts to 'on' so that driver expressions will work
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
-	BLENDER = /Applications/Blender/blender.app/Contents/MacOS/blender -y
+	BLENDER = /Applications/Blender.app/Contents/MacOS/Blender -y
 else ifeq ($(UNAME_S),Linux)
 	BLENDER = ../../blender-2.90.0-linux64/blender -y
 else
@@ -17,15 +17,15 @@ EXPORT_SCENE=export-scene.py
 DIST=../dist
 
 all : \
-	$(DIST)/phone-bank.pnct \
-	$(DIST)/phone-bank.w \
-	$(DIST)/phone-bank.scene \
+	$(DIST)/delivery.pnct \
+	$(DIST)/delivery.w \
+	$(DIST)/delivery.scene \
 
-$(DIST)/phone-bank.pnct : phone-bank.blend $(EXPORT_MESHES)
+$(DIST)/delivery.pnct : delivery.blend $(EXPORT_MESHES)
 	$(BLENDER) --background --python $(EXPORT_MESHES) -- '$<':Platforms '$@'
 
-$(DIST)/phone-bank.scene : phone-bank.blend $(EXPORT_SCENE)
+$(DIST)/delivery.scene : delivery.blend $(EXPORT_SCENE)
 	$(BLENDER) --background --python $(EXPORT_SCENE) -- '$<':Platforms '$@'
 
-$(DIST)/phone-bank.w : phone-bank.blend $(EXPORT_WALKMESHES)
+$(DIST)/delivery.w : delivery.blend $(EXPORT_WALKMESHES)
 	$(BLENDER) --background --python $(EXPORT_WALKMESHES) -- '$<':WalkMeshes '$@'
