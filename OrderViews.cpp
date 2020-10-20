@@ -115,6 +115,8 @@ OrderSideBarView::OrderSideBarView() {
 		.set_font_size(HEADER_FONT_SIZE);
 	pending_order_label_ = std::make_shared<TextSpan>();
 	pending_order_prompt_ = std::make_shared<TextSpan>();
+	pending_order_prompt2_ = std::make_shared<TextSpan>();
+
 	accepted_order_label_ = std::make_shared<TextSpan>();
 	pending_order_label_->set_text("Pending Orders")
 		.set_color(glm::u8vec4(122, 233, 255, 255))
@@ -122,6 +124,7 @@ OrderSideBarView::OrderSideBarView() {
 		.set_position(1000, 32);
 
 	pending_order_prompt_->set_text("[Press enter to accept order]");
+	pending_order_prompt2_->set_text("[Press up/down to view details]");
 
 	int pending_orders_height = get_orders_view_height(pending_orders_);
 	accepted_order_label_->set_text("Accepted Orders")
@@ -168,6 +171,7 @@ void OrderSideBarView::draw() {
 	total_income_label_->draw();
 	pending_order_label_->draw();
 	pending_order_prompt_->draw();
+	pending_order_prompt2_->draw();
 	accepted_order_label_->draw();
 	for (auto &v : pending_orders_) {
 		v.draw();
@@ -188,6 +192,8 @@ void OrderSideBarView::redo_render() {
 	cursor_y += HEADER_FONT_SIZE;
 	cursor_y += 4;
 	pending_order_prompt_->set_position(1000, cursor_y);
+	cursor_y += 16;
+	pending_order_prompt2_->set_position(1000, cursor_y);
 	cursor_y += 16;
 	cursor_y += 16; // padding after header
 	for (size_t i = 0; i < pending_orders_.size(); i++) {

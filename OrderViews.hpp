@@ -54,6 +54,7 @@ private:
 	TextSpanPtr total_income_label_;
 	TextSpanPtr pending_order_label_;
 	TextSpanPtr pending_order_prompt_;
+	TextSpanPtr pending_order_prompt2_;
 	std::vector<OrderItemView> pending_orders_;
 	TextSpanPtr accepted_order_label_;
 	std::vector<OrderItemView> accepted_orders_;

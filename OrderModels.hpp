@@ -4,8 +4,8 @@
 #include <string>
 
 enum class Location {
-    STORE1,
-    STORE2,
+    STORE_CHEESECAKE,
+    STORE_PANCAKE,
     CLIENT1,
     CLIENT2,
     CLIENT3
@@ -16,6 +16,10 @@ glm::vec3 get_location_position(Location loc);
 glm::u8vec4 get_location_color(Location loc);
 
 std::string get_location_name(Location loc);
+
+Location get_random_store();
+
+Location get_random_client();
 
 struct Order {
     Location store;
