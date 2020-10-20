@@ -14,6 +14,7 @@ if $(OS) = NT { #Windows
 		/I"$(NEST_LIBS)/libogg/include"
 		/I"$(NEST_LIBS)/harfbuzz/include"
 		/I"$(NEST_LIBS)/freetype/include"
+		/I"third_party/include"
 		#disable a few warnings:
 		/wd4146 #-1U is still unsigned
 		/wd4297 #unforunately SDLmain is nothrow
@@ -50,6 +51,7 @@ if $(OS) = NT { #Windows
 		-I$(NEST_LIBS)/libogg/include                                               #libogg
 		-I$(NEST_LIBS)/freetype/include                                             #freetype
 		-I$(NEST_LIBS)/harfbuzz/include                                             #harfbuzz
+		-Ithird_party/include
 		;
 	LINK = clang++ ;
 	LINKFLAGS = -std=c++17 -g -Wall -Werror ;
@@ -78,6 +80,7 @@ if $(OS) = NT { #Windows
 		-I$(NEST_LIBS)/libogg/include                                               #libogg
 		-I$(NEST_LIBS)/freetype/include                                             #freetype
 		-I$(NEST_LIBS)/harfbuzz/include                                             #harfbuzz
+		-Ithird_party/include
 		;
 	LINK = g++ -no-pie ;
 	LINKFLAGS = -std=c++17 -g -Wall -Werror ;

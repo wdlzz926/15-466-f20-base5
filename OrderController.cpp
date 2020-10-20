@@ -1,5 +1,6 @@
 #include "OrderController.hpp"
 #include <iterator>
+#include "random.hpp"
 void OrderController::draw() {
 	view->draw();
 }
@@ -41,6 +42,7 @@ void OrderController::pickup_order(Location store) {
 			o.is_delivering = true;
 		}
 	}
+	view->set_accepted_orders(accepted_orders_);
 }
 void OrderController::deliver_order(Location client) {
 	for (auto it = accepted_orders_.begin(); it!=accepted_orders_.end();) {
@@ -51,7 +53,30 @@ void OrderController::deliver_order(Location client) {
 			it++;
 		}
 	}
+	view->set_accepted_orders(accepted_orders_);
 }
 void OrderController::add_income(int delta) {
 	current_income_ += delta;
+	view->set_total_income(current_income_);
+}
+
+void OrderController::update(float elapsed) {
+	for (auto it = pending_orders_.begin(); it!=pending_orders_.end();) {
+		it->remaining_time -= elapsed;
+		if (it->remaining_time <= 0) {
+			it = pending_orders_.erase(it);
+		} else {
+			it++;
+		}
+	}
+	for (auto it = accepted_orders_.begin(); it!=accepted_orders_.end();) {
+		it->remaining_time -= elapsed;
+		if (it->remaining_time <= 0) {
+			it = accepted_orders_.erase(it);
+		} else {
+			it++;
+		}
+	}
+	view->set_pending_orders(pending_orders_);
+	view->set_accepted_orders(accepted_orders_);
 }

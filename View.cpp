@@ -369,6 +369,7 @@ void TextSpan::redo_shape() {
 }
 
 TextSpan &TextSpan::set_text(std::string text) {
+	if (this->text_ == text) { return *this; }
 	undo_render();
 	this->text_ = std::move(text);
 	return *this;
