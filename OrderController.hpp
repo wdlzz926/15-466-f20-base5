@@ -13,6 +13,7 @@ public:
 	const Order &get_current_active_order();
 	void pickup_order(Location store);
 	void deliver_order(Location client);
+	void add_income(int delta);
 	int current_income_ = 0;
 	std::vector<Order> pending_orders_;
 	std::vector<Order> accepted_orders_;

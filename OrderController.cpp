@@ -16,3 +16,24 @@ OrderController::OrderController() {
 bool OrderController::handle_keypress(SDL_Keycode key) {
 	return view->handle_keypress(key);
 }
+
+void OrderController::pickup_order(Location store) {
+	for (auto &o : accepted_orders_) {
+		if (o.store==store) {
+			o.is_delivering = true;
+		}
+	}
+}
+void OrderController::deliver_order(Location client) {
+	for (auto it = accepted_orders_.begin(); it!=accepted_orders_.end();) {
+		if (it->client==client && it->is_delivering) {
+			add_income(it->income);
+			it = accepted_orders_.erase(it);
+		} else {
+			it++;
+		}
+	}
+}
+void OrderController::add_income(int delta) {
+	current_income_ += delta;
+}
