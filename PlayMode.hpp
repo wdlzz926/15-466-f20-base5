@@ -24,7 +24,7 @@ struct PlayMode : Mode {
 	const float friction = 1.5f;
 	const float acceleration = 2.0f;
 	const float enterDis = 3.0f;
-	std::shared_ptr<view::TextSpan> mytext;
+	std::shared_ptr<view::TextSpan> button_hint;
 
 
 	//----- game state -----
@@ -48,7 +48,7 @@ struct PlayMode : Mode {
 	} walker, car;
 
 	bool driving = true;
-	float carSpeed = 0.0f;
+	float car_speed = 0.0f;
 
 	OrderController order_controller;
 };

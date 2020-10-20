@@ -59,7 +59,7 @@ PlayMode::PlayMode() : scene(*delivery_scene) {
 	car.camera->transform->parent = car.transform;
 
 	//car's eyes are 1.8 units above the ground:
-	car.camera->transform->position = glm::vec3(0.0f, -3.0f, 1.8f);
+	car.camera->transform->position = glm::vec3(0.0f, -3.0f, 1.0f);
 
 	//rotate camera facing direction (-z) to car facing direction (+y):
 	car.camera->transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -75,7 +75,7 @@ PlayMode::PlayMode() : scene(*delivery_scene) {
 	walker.camera->fovy = glm::radians(60.0f);
 	walker.camera->near = 0.01f;
 	walker.camera->transform->parent = walker.transform;
-	walker.camera->transform->position = glm::vec3(0.0f, 0.0f, 1.8f);
+	walker.camera->transform->position = glm::vec3(0.0f, 0.0f, 1.0f);
 	walker.camera->transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
 	for (auto &transform : scene.transforms) {
@@ -84,8 +84,8 @@ PlayMode::PlayMode() : scene(*delivery_scene) {
 		}
 	}
 
-	mytext = std::make_shared<view::TextSpan>();
-	mytext->set_text("aaaa").set_position(500, 680).set_visibility(true);
+	button_hint = std::make_shared<view::TextSpan>();
+	button_hint->set_text("").set_position(500, 650).set_visibility(true);
 
 }
 
@@ -178,12 +178,12 @@ void PlayMode::update_order(){
 	for (Order o : acceptedOrders){
 		if (o.is_delivering){
 			if (glm::distance(playerLocation, get_location_position(o.client)) < enterDis){
-				//order_controller.deliver_order(o.client);
+				order_controller.deliver_order(o.client);
 				std::cout << "deliver order" << std::endl;
 			}
 		} else {
 			if (glm::distance(playerLocation, get_location_position(o.store)) < enterDis){
-				// order_controller.pickup_order(o.store);
+				order_controller.pickup_order(o.store);
 				std::cout << "pickup order" << std::endl;
 			}
 		}
@@ -200,31 +200,30 @@ void PlayMode::switch_camera(){
 			return;
 		walkmesh = &(delivery_walkmeshes->lookup("ZMesh"));
 	}
+	button_hint->set_text("");
 	driving = !driving;
 }
 
 glm::vec2 PlayMode::update_walker(float elapsed){
-		//combine inputs into a move:
-		constexpr float PlayerSpeed = 3.0f;
-		glm::vec2 move = glm::vec2(0.0f);
-		if (left.pressed && !right.pressed) move.x =-1.0f;
-		if (!left.pressed && right.pressed) move.x = 1.0f;
-		if (down.pressed && !up.pressed) move.y =-1.0f;
-		if (!down.pressed && up.pressed) move.y = 1.0f;
+	//combine inputs into a move:
+	constexpr float PlayerSpeed = 3.0f;
+	glm::vec2 move = glm::vec2(0.0f);
+	if (left.pressed && !right.pressed) move.x =-1.0f;
+	if (!left.pressed && right.pressed) move.x = 1.0f;
+	if (down.pressed && !up.pressed) move.y =-1.0f;
+	if (!down.pressed && up.pressed) move.y = 1.0f;
 
-		//make it so that moving diagonally doesn't go faster:
-		if (move != glm::vec2(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
+	//make it so that moving diagonally doesn't go faster:
+	if (move != glm::vec2(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
 
-		
+	if (glm::distance(walker.transform->position, car.transform->position) <= enterDis){
+		button_hint->set_text("Press F to enter car.");
+	} else {
+		button_hint->set_text("");
+	}
 
-		/*
-		glm::mat4x3 frame = camera->transform->make_local_to_parent();
-		glm::vec3 right = frame[0];
-		//glm::vec3 up = frame[1];
-		glm::vec3 forward = -frame[2];
 
-		camera->transform->position += move.x * right + move.y * forward;
-		*/
+
 	return move;
 }
 
@@ -234,17 +233,17 @@ glm::vec2 PlayMode::update_car(float elapsed){
 		glm::vec2 move = glm::vec2(0.0f);
 		if (left.pressed && !right.pressed) move.x = 1.0f;
 		if (!left.pressed && right.pressed) move.x = -1.0f;
-		if (down.pressed && !up.pressed) carSpeed -= acceleration*elapsed;
-		if (!down.pressed && up.pressed) carSpeed += acceleration*elapsed;
-		if (abs(carSpeed) > 0)
-			carSpeed -= friction*elapsed*(carSpeed/abs(carSpeed));
-		carSpeed /= std::max(abs(carSpeed)/2, 1.0f);
-		// std::cout << carSpeed << std::endl;
-		move.y = carSpeed*elapsed;
+		if (down.pressed && !up.pressed) car_speed -= acceleration*elapsed;
+		if (!down.pressed && up.pressed) car_speed += acceleration*elapsed;
+		if (abs(car_speed) > 0)
+			car_speed -= friction*elapsed*(car_speed/abs(car_speed));
+		car_speed /= std::max(abs(car_speed)/2, 1.0f);
+		// std::cout << car_speed << std::endl;
+		move.y = car_speed*elapsed;
 
 		//make it so that moving diagonally doesn't go faster:
 		// if (move != glm::vec2(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
-		glm::vec3 normal = carmesh->to_world_smooth_normal(car.at);
+		glm::vec3 normal = walkmesh->to_world_smooth_normal(car.at);
 		car.transform->rotation = glm::angleAxis(glm::radians(45.0f*move.x*elapsed), normal) * car.transform->rotation;
 	
 		move.x = 0.0f;
@@ -256,6 +255,12 @@ glm::vec2 PlayMode::update_car(float elapsed){
 
 		camera->transform->position += move.x * right + move.y * forward;
 		*/
+	
+	if (abs(car_speed) < 0.001f){
+		button_hint->set_text("Press F to get out of car.");
+	} else {
+		button_hint->set_text("");
+	}
 	return move;
 }
 
@@ -272,10 +277,6 @@ void PlayMode::update(float elapsed) {
 	} else {
 		move = update_walker(elapsed);
 		target = &walker;
-		if (glm::distance(walker.transform->position, car.transform->position) <= enterDis){
-			switch_camera();
-			return;
-		}
 	}
 	
 	//get move in world coordinate system:
@@ -351,8 +352,8 @@ void PlayMode::update(float elapsed) {
 
 void PlayMode::draw(glm::uvec2 const &drawable_size) {
 	//update camera aspect ratio for drawable:
-	car.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
-
+	
+	
 	//set up light type and position for lit_color_texture_program:
 	// TODO: consider using the Light(s) in the scene to do this
 	glUseProgram(lit_color_texture_program->program);
@@ -367,12 +368,15 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS); //this is the default depth comparison function, but FYI you can change it.
-	if (driving)
+	if (driving){
+		car.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
 		scene.draw(*car.camera);
-	else
+	} else{
+		walker.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
 		scene.draw(*walker.camera);
+	}
 	
-
+	button_hint->draw();
 	{ //use DrawLines to overlay some text:
 		glDisable(GL_DEPTH_TEST);
 		float aspect = float(drawable_size.x) / float(drawable_size.y);
