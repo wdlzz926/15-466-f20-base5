@@ -59,7 +59,7 @@ PlayMode::PlayMode() : scene(*delivery_scene) {
 	car.camera->transform->parent = car.transform;
 
 	//car's eyes are 1.8 units above the ground:
-	car.camera->transform->position = glm::vec3(0.0f, -3.0f, 1.8f);
+	car.camera->transform->position = glm::vec3(0.0f, -3.0f, 1.0f);
 
 	//rotate camera facing direction (-z) to car facing direction (+y):
 	car.camera->transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -75,7 +75,7 @@ PlayMode::PlayMode() : scene(*delivery_scene) {
 	walker.camera->fovy = glm::radians(60.0f);
 	walker.camera->near = 0.01f;
 	walker.camera->transform->parent = walker.transform;
-	walker.camera->transform->position = glm::vec3(0.0f, 0.0f, 1.8f);
+	walker.camera->transform->position = glm::vec3(0.0f, 0.0f, 1.0f);
 	walker.camera->transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
 	for (auto &transform : scene.transforms) {
@@ -83,6 +83,9 @@ PlayMode::PlayMode() : scene(*delivery_scene) {
 			transform.parent = car.transform;
 		}
 	}
+
+	button_hint = std::make_shared<view::TextSpan>();
+	button_hint->set_text("").set_position(500, 650).set_visibility(true);
 
 }
 
@@ -116,7 +119,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			|| evt.key.keysym.sym == SDLK_DOWN
 			|| evt.key.keysym.sym == SDLK_RETURN
 			) {
-			return order_controller.handle_keypress(evt.key.keysym.sym);
+			return order_controller->handle_keypress(evt.key.keysym.sym);
 		}
 	} else if (evt.type == SDL_KEYUP) {
 		if (evt.key.keysym.sym == SDLK_a) {
@@ -133,6 +136,8 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			return true;
 		} else if (evt.key.keysym.sym == SDLK_f) {
 			switch_camera();
+		} else if (evt.key.keysym.sym == SDLK_e) {
+			update_order();
 		}
 	} 
 	else if (evt.type == SDL_MOUSEBUTTONDOWN) {
@@ -163,6 +168,28 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	return false;
 }
 
+void PlayMode::update_order(){
+	glm::vec3 playerLocation;
+	if (driving)
+		playerLocation = car.transform->position;
+	else
+		playerLocation = walker.transform->position;
+	std::vector<Order> acceptedOrders = order_controller->accepted_orders_;
+	for (Order o : acceptedOrders){
+		if (o.is_delivering){
+			if (glm::distance(playerLocation, get_location_position(o.client)) < enterDis){
+				order_controller->deliver_order(o.client);
+				std::cout << "deliver order" << std::endl;
+			}
+		} else {
+			if (glm::distance(playerLocation, get_location_position(o.store)) < enterDis){
+				order_controller->pickup_order(o.store);
+				std::cout << "pickup order" << std::endl;
+			}
+		}
+	}
+}
+
 void PlayMode::switch_camera(){
 	if (driving){
 		walker.transform->position = car.transform->position;
@@ -173,31 +200,47 @@ void PlayMode::switch_camera(){
 			return;
 		walkmesh = &(delivery_walkmeshes->lookup("ZMesh"));
 	}
+	button_hint->set_text("");
 	driving = !driving;
 }
 
 glm::vec2 PlayMode::update_walker(float elapsed){
-		//combine inputs into a move:
-		constexpr float PlayerSpeed = 3.0f;
-		glm::vec2 move = glm::vec2(0.0f);
-		if (left.pressed && !right.pressed) move.x =-1.0f;
-		if (!left.pressed && right.pressed) move.x = 1.0f;
-		if (down.pressed && !up.pressed) move.y =-1.0f;
-		if (!down.pressed && up.pressed) move.y = 1.0f;
+	//combine inputs into a move:
+	constexpr float PlayerSpeed = 3.0f;
+	glm::vec2 move = glm::vec2(0.0f);
+	if (left.pressed && !right.pressed) move.x =-1.0f;
+	if (!left.pressed && right.pressed) move.x = 1.0f;
+	if (down.pressed && !up.pressed) move.y =-1.0f;
+	if (!down.pressed && up.pressed) move.y = 1.0f;
 
-		//make it so that moving diagonally doesn't go faster:
-		if (move != glm::vec2(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
+	//make it so that moving diagonally doesn't go faster:
+	if (move != glm::vec2(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
 
-		
+	if (glm::distance(walker.transform->position, car.transform->position) <= enterDis){
+		button_hint->set_text("Press F to enter car.");
+	} else {
+		button_hint->set_text("");
+	}
 
-		/*
-		glm::mat4x3 frame = camera->transform->make_local_to_parent();
-		glm::vec3 right = frame[0];
-		//glm::vec3 up = frame[1];
-		glm::vec3 forward = -frame[2];
+	glm::vec3 playerLocation;
+	if (driving)
+		playerLocation = car.transform->position;
+	else
+		playerLocation = walker.transform->position;
+	std::vector<Order> acceptedOrders = order_controller->accepted_orders_;
+	button_hint->set_text("");
+	for (Order o : acceptedOrders){
+		if (o.is_delivering){
+			if (glm::distance(playerLocation, get_location_position(o.client)) < enterDis){
+				button_hint->set_text("Press E to deliver order(s).");
+			}
+		} else {
+			if (glm::distance(playerLocation, get_location_position(o.store)) < enterDis){
+				button_hint->set_text("Press E to pickup order(s).");
+			}
+		}
+	}
 
-		camera->transform->position += move.x * right + move.y * forward;
-		*/
 	return move;
 }
 
@@ -207,13 +250,13 @@ glm::vec2 PlayMode::update_car(float elapsed){
 		glm::vec2 move = glm::vec2(0.0f);
 		if (left.pressed && !right.pressed) move.x = 1.0f;
 		if (!left.pressed && right.pressed) move.x = -1.0f;
-		if (down.pressed && !up.pressed) carSpeed -= acceleration*elapsed;
-		if (!down.pressed && up.pressed) carSpeed += acceleration*elapsed;
-		if (abs(carSpeed) > 0)
-			carSpeed -= friction*elapsed*(carSpeed/abs(carSpeed));
-		carSpeed /= std::max(abs(carSpeed)/2, 1.0f);
-		// std::cout << carSpeed << std::endl;
-		move.y = carSpeed*elapsed;
+		if (down.pressed && !up.pressed) car_speed -= acceleration*elapsed;
+		if (!down.pressed && up.pressed) car_speed += acceleration*elapsed;
+		if (abs(car_speed) > 0)
+			car_speed -= friction*elapsed*(car_speed/abs(car_speed));
+		car_speed /= std::max(abs(car_speed)/2, 1.0f);
+		// std::cout << car_speed << std::endl;
+		move.y = car_speed*elapsed;
 
 		//make it so that moving diagonally doesn't go faster:
 		// if (move != glm::vec2(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
@@ -229,6 +272,12 @@ glm::vec2 PlayMode::update_car(float elapsed){
 
 		camera->transform->position += move.x * right + move.y * forward;
 		*/
+	
+	if (abs(car_speed) < 0.1f){
+		button_hint->set_text("Press F to get out of car.");
+	} else {
+		button_hint->set_text("");
+	}
 	return move;
 }
 
@@ -249,68 +298,68 @@ void PlayMode::update(float elapsed) {
 	
 	//get move in world coordinate system:
 	// glm::vec3 current_norm = walkmesh->to_world_smooth_normal(target->at);
-		glm::vec3 remain = target->transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
+	glm::vec3 remain = target->transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
 
-		//using a for() instead of a while() here so that if walkpoint gets stuck in
-		// some awkward case, code will not infinite loop:
-		for (uint32_t iter = 0; iter < 10; ++iter) {
-			if (remain == glm::vec3(0.0f)) break;
-			WalkPoint end;
-			float time;
-			walkmesh->walk_in_triangle(target->at, remain, &end, &time);
+	//using a for() instead of a while() here so that if walkpoint gets stuck in
+	// some awkward case, code will not infinite loop:
+	for (uint32_t iter = 0; iter < 10; ++iter) {
+		if (remain == glm::vec3(0.0f)) break;
+		WalkPoint end;
+		float time;
+		walkmesh->walk_in_triangle(target->at, remain, &end, &time);
+		target->at = end;
+		if (time == 1.0f) {
+			//finished within triangle:
+			remain = glm::vec3(0.0f);
+			break;
+		}
+		//some step remains:
+		remain *= (1.0f - time);
+		//try to step over edge:
+		glm::quat rotation;
+		if (walkmesh->cross_edge(target->at, &end, &rotation)) {
+			//stepped to a new triangle:
 			target->at = end;
-			if (time == 1.0f) {
-				//finished within triangle:
-				remain = glm::vec3(0.0f);
-				break;
-			}
-			//some step remains:
-			remain *= (1.0f - time);
-			//try to step over edge:
-			glm::quat rotation;
-			if (walkmesh->cross_edge(target->at, &end, &rotation)) {
-				//stepped to a new triangle:
-				target->at = end;
-				//rotate step to follow surface:
-				remain = rotation * remain;
+			//rotate step to follow surface:
+			remain = rotation * remain;
+		} else {
+			//ran into a wall, bounce / slide along it:
+			glm::vec3 const &a = walkmesh->vertices[target->at.indices.x];
+			glm::vec3 const &b = walkmesh->vertices[target->at.indices.y];
+			glm::vec3 const &c = walkmesh->vertices[target->at.indices.z];
+			glm::vec3 along = glm::normalize(b-a);
+			glm::vec3 normal = glm::normalize(glm::cross(b-a, c-a));
+			glm::vec3 in = glm::cross(normal, along);
+
+			//check how much 'remain' is pointing out of the triangle:
+			float d = glm::dot(remain, in);
+			if (d < 0.0f) {
+				//bounce off of the wall:
+				remain += (-1.25f * d) * in;
 			} else {
-				//ran into a wall, bounce / slide along it:
-				glm::vec3 const &a = walkmesh->vertices[target->at.indices.x];
-				glm::vec3 const &b = walkmesh->vertices[target->at.indices.y];
-				glm::vec3 const &c = walkmesh->vertices[target->at.indices.z];
-				glm::vec3 along = glm::normalize(b-a);
-				glm::vec3 normal = glm::normalize(glm::cross(b-a, c-a));
-				glm::vec3 in = glm::cross(normal, along);
-
-				//check how much 'remain' is pointing out of the triangle:
-				float d = glm::dot(remain, in);
-				if (d < 0.0f) {
-					//bounce off of the wall:
-					remain += (-1.25f * d) * in;
-				} else {
-					//if it's just pointing along the edge, bend slightly away from wall:
-					remain += 0.01f * d * in;
-				}
+				//if it's just pointing along the edge, bend slightly away from wall:
+				remain += 0.01f * d * in;
 			}
 		}
+	}
 
-		if (remain != glm::vec3(0.0f)) {
-			std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
-		}
+	if (remain != glm::vec3(0.0f)) {
+		std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
+	}
 
-		//update car's position to respect walking:
-		target->transform->position = walkmesh->to_world_point(target->at);
-	
-		{ //update car's rotation to respect local (smooth) up-vector:
-			
-			glm::quat adjust = glm::rotation(
-				target->transform->rotation * glm::vec3(0.0f, 0.0f, 1.0f), //current up vector
-				// current_norm,
-				walkmesh->to_world_smooth_normal(target->at) //smoothed up vector at walk location
-			);
-			target->transform->rotation = glm::normalize(adjust * target->transform->rotation);
+	//update car's position to respect walking:
+	target->transform->position = walkmesh->to_world_point(target->at);
+
+	{ //update car's rotation to respect local (smooth) up-vector:
 		
-		}
+		glm::quat adjust = glm::rotation(
+			target->transform->rotation * glm::vec3(0.0f, 0.0f, 1.0f), //current up vector
+			// current_norm,
+			walkmesh->to_world_smooth_normal(target->at) //smoothed up vector at walk location
+		);
+		target->transform->rotation = glm::normalize(adjust * target->transform->rotation);
+	
+	}
 	//reset button press counters:
 	left.downs = 0;
 	right.downs = 0;
@@ -320,8 +369,8 @@ void PlayMode::update(float elapsed) {
 
 void PlayMode::draw(glm::uvec2 const &drawable_size) {
 	//update camera aspect ratio for drawable:
-	car.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
-
+	
+	
 	//set up light type and position for lit_color_texture_program:
 	// TODO: consider using the Light(s) in the scene to do this
 	glUseProgram(lit_color_texture_program->program);
@@ -336,12 +385,15 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS); //this is the default depth comparison function, but FYI you can change it.
-	if (driving)
+	if (driving){
+		car.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
 		scene.draw(*car.camera);
-	else
+	} else{
+		walker.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
 		scene.draw(*walker.camera);
+	}
 	
-
+	button_hint->draw();
 	{ //use DrawLines to overlay some text:
 		glDisable(GL_DEPTH_TEST);
 		float aspect = float(drawable_size.x) / float(drawable_size.y);
@@ -363,6 +415,6 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 			glm::u8vec4(0xff, 0xff, 0xff, 0x00));
 	}
-	order_controller.draw();
+	order_controller->draw();
 	GL_ERRORS();
 }

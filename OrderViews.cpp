@@ -37,9 +37,9 @@ void OrderItemView::set_order(Order order) {
 		.set_color(get_location_color(order.store));
 	client_label_->set_text(get_location_name(order.client))
 		.set_color(get_location_color(order.client));
-	std::string remaining_time = "time remaining: " + std::to_string(static_cast<int>(order.remaining_time)) + "sec";
+	std::string remaining_time = "Time remaining: " + std::to_string(static_cast<int>(order.remaining_time)) + "sec";
 	remaining_time_->set_text(remaining_time);
-	income_->set_text("income: $" + std::to_string(order.income));
+	income_->set_text("Income: $" + std::to_string(order.income));
 	redo_render();
 }
 
@@ -148,7 +148,7 @@ void OrderSideBarView::redo_render() {
 		.set_font_size(HEADER_FONT_SIZE)
 		.set_position(1000, cursor_y);
 	cursor_y += HEADER_FONT_SIZE;
-	cursor_y += 8; // padding after header
+	cursor_y += 16; // padding after header
 	for (size_t i = 0; i < pending_orders_.size(); i++) {
 		bool is_on_focus = (current_hover_panel_ == 0 && current_hover_item_ == (int)i);
 		pending_orders_.at(i).set_position(1000, cursor_y);
@@ -171,7 +171,7 @@ void OrderSideBarView::redo_render() {
 		accepted_orders_.at(i).set_focus_state(is_on_focus);
 		accepted_orders_.at(i).set_expansion_state(is_on_focus);
 		cursor_y += accepted_orders_.at(i).get_height();
-		cursor_y += 8; // padding
+		cursor_y += 16; // padding
 	}
 }
 
@@ -203,6 +203,8 @@ bool OrderSideBarView::handle_keypress(SDL_Keycode key) {
 	}
 	return false;
 }
+
+std::pair<int, int> OrderSideBarView::get_focus() const { return {current_hover_panel_, current_hover_item_}; }
 
 }
 

@@ -20,3 +20,13 @@ std::string get_location_name(Location loc) {
 		default: throw std::invalid_argument("loc not recognized");
 	}
 }
+
+glm::vec3 get_location_position(Location loc) {
+	switch (loc) {
+		case Location::STORE1: return glm::vec3(0.0f, 0.0f, 0.0f);
+		case Location::STORE2: return glm::vec3(1.0f, 0.0f, 0.0f);
+		case Location::CLIENT1: return glm::vec3(0.0f, 1.0f, 0.0f);
+		case Location::CLIENT2: return glm::vec3(1.0f, 1.0f, 0.0f);
+		default: throw std::invalid_argument("loc not recognized");
+	}
+}
