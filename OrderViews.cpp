@@ -3,13 +3,6 @@ namespace view {
 
 OrderItemView::OrderItemView(Order order) {
 	order_ = order;
-	from_label_ = std::make_shared<TextSpan>();
-	store_label_ = std::make_shared<TextSpan>();
-	to_label_ = std::make_shared<TextSpan>();
-	client_label_ = std::make_shared<TextSpan>();
-	remaining_time_ = std::make_shared<TextSpan>();
-	income_ = std::make_shared<TextSpan>();
-	focus_indicator_ = std::make_shared<TextSpan>();
 
 	from_label_->set_text("From: ");
 	to_label_->set_text("To: ");
@@ -28,6 +21,9 @@ void OrderItemView::draw() {
 	if (is_expanded_) {
 		remaining_time_->draw();
 		income_->draw();
+		if (order_.is_accepted) {
+			is_delivering_label_->draw();
+		}
 	}
 }
 
@@ -40,11 +36,22 @@ void OrderItemView::set_order(Order order) {
 	std::string remaining_time = "Time remaining: " + std::to_string(static_cast<int>(order.remaining_time)) + "sec";
 	remaining_time_->set_text(remaining_time);
 	income_->set_text("Income: $" + std::to_string(order.income));
+	is_delivering_label_->set_text(
+		order.is_delivering ? "Is delivering: Yes" : "Is delivering: No"
+		);
 	redo_render();
 }
 
 int OrderItemView::get_height() const {
-	return (is_expanded_ ? 4 : 2) * FONT_SIZE;
+	int num_of_lines = 0;
+	if (is_expanded_ && order_.is_accepted) {
+		num_of_lines = 5;
+	} else if (is_expanded_ && !order_.is_accepted) {
+		num_of_lines = 4;
+	} else {
+		num_of_lines = 2;
+	}
+	return num_of_lines * FONT_SIZE;
 }
 
 void OrderItemView::set_expansion_state(bool value) {
@@ -88,18 +95,33 @@ void OrderItemView::redo_render() {
 		income_->set_position(position_x, position_y + 3*FONT_SIZE)
 			.set_color(color)
 			.set_visibility(true);
+		if (order_.is_accepted) {
+			is_delivering_label_->set_position(position_x, position_y + 4*FONT_SIZE)
+				.set_color(color)
+				.set_visibility(true);
+		} else {
+			is_delivering_label_->set_visibility(false);
+		}
 	} else {
 		remaining_time_->set_visibility(false);
 		income_->set_visibility(false);
+		is_delivering_label_->set_visibility(false);
 	}
 }
 
 OrderSideBarView::OrderSideBarView() {
+	total_income_label_ = std::make_shared<TextSpan>();
+	total_income_label_->set_text("Total Income: $" + std::to_string(total_income_))
+		.set_font_size(HEADER_FONT_SIZE);
 	pending_order_label_ = std::make_shared<TextSpan>();
+	pending_order_prompt_ = std::make_shared<TextSpan>();
 	accepted_order_label_ = std::make_shared<TextSpan>();
 	pending_order_label_->set_text("Pending Orders")
 		.set_color(glm::u8vec4(122, 233, 255, 255))
+		.set_font_size(HEADER_FONT_SIZE)
 		.set_position(1000, 32);
+
+	pending_order_prompt_->set_text("[Press enter to accept order]");
 
 	int pending_orders_height = get_orders_view_height(pending_orders_);
 	accepted_order_label_->set_text("Accepted Orders")
@@ -107,19 +129,31 @@ OrderSideBarView::OrderSideBarView() {
 		.set_position(1000, 32 + pending_orders_height + 32);
 }
 void OrderSideBarView::set_pending_orders(const std::vector<Order> &pending_orders) {
-	pending_orders_.clear();
-	for (const Order &o : pending_orders) {
-		pending_orders_.emplace_back(o);
+	if (pending_orders_.size()==pending_orders.size()) {
+		for (size_t i = 0; i < pending_orders.size(); i++) {
+			pending_orders_.at(i).set_order(pending_orders.at(i));
+		}
+	} else {
+		pending_orders_.clear();
+		for (const Order &o : pending_orders) {
+			pending_orders_.emplace_back(o);
+		}
+		redo_render();
 	}
-	redo_render();
 }
 
 void OrderSideBarView::set_accepted_orders(const std::vector<Order> &accepted_orders) {
-	accepted_orders_.clear();
-	for (const Order &o : accepted_orders) {
-		accepted_orders_.emplace_back(o);
+	if (accepted_orders_.size()==accepted_orders.size()) {
+		for (size_t i = 0; i < accepted_orders.size(); i++) {
+			accepted_orders_.at(i).set_order(accepted_orders.at(i));
+		}
+	} else {
+		accepted_orders_.clear();
+		for (const Order &o : accepted_orders) {
+			accepted_orders_.emplace_back(o);
+		}
+		redo_render();
 	}
-	redo_render();
 }
 
 int OrderSideBarView::get_orders_view_height(const std::vector<OrderItemView> &orders_view) {
@@ -131,7 +165,9 @@ int OrderSideBarView::get_orders_view_height(const std::vector<OrderItemView> &o
 }
 
 void OrderSideBarView::draw() {
+	total_income_label_->draw();
 	pending_order_label_->draw();
+	pending_order_prompt_->draw();
 	accepted_order_label_->draw();
 	for (auto &v : pending_orders_) {
 		v.draw();
@@ -143,11 +179,16 @@ void OrderSideBarView::draw() {
 
 void OrderSideBarView::redo_render() {
 	int cursor_y = 32;
-	pending_order_label_->set_text("Pending Orders")
-		.set_color(glm::u8vec4(122, 233, 255, 255))
-		.set_font_size(HEADER_FONT_SIZE)
+	total_income_label_->set_position(1000, cursor_y);
+	cursor_y += HEADER_FONT_SIZE;
+	cursor_y += 48; // padding
+	pending_order_label_
+		->set_color(glm::u8vec4(255, 255, 255, 255))
 		.set_position(1000, cursor_y);
 	cursor_y += HEADER_FONT_SIZE;
+	cursor_y += 4;
+	pending_order_prompt_->set_position(1000, cursor_y);
+	cursor_y += 16;
 	cursor_y += 16; // padding after header
 	for (size_t i = 0; i < pending_orders_.size(); i++) {
 		bool is_on_focus = (current_hover_panel_ == 0 && current_hover_item_ == (int)i);
@@ -159,7 +200,7 @@ void OrderSideBarView::redo_render() {
 	}
 	cursor_y += 32; // padding between sections
 	accepted_order_label_->set_text("Accepted Orders")
-		.set_color(glm::u8vec4(157, 255, 122, 255))
+		.set_color(glm::u8vec4(255, 255, 255, 255))
 		.set_font_size(HEADER_FONT_SIZE)
 		.set_position(1000, cursor_y);
 	cursor_y += HEADER_FONT_SIZE;
@@ -205,6 +246,11 @@ bool OrderSideBarView::handle_keypress(SDL_Keycode key) {
 }
 
 std::pair<int, int> OrderSideBarView::get_focus() const { return {current_hover_panel_, current_hover_item_}; }
+
+void OrderSideBarView::set_total_income(int value) {
+	total_income_ = value;
+	total_income_label_->set_text("Total Income: $" + std::to_string(total_income_));
+}
 
 }
 
