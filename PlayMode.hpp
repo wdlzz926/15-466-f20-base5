@@ -50,5 +50,5 @@ struct PlayMode : Mode {
 	bool driving = true;
 	float car_speed = 0.0f;
 
-	OrderController order_controller;
+	std::shared_ptr<OrderController> order_controller = std::make_shared<OrderController>();
 };

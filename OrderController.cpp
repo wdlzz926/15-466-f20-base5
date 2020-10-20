@@ -1,4 +1,5 @@
 #include "OrderController.hpp"
+#include <iterator>
 void OrderController::draw() {
 	view->draw();
 }
@@ -14,5 +15,43 @@ OrderController::OrderController() {
 	view->set_accepted_orders(accepted_orders_);
 }
 bool OrderController::handle_keypress(SDL_Keycode key) {
-	return view->handle_keypress(key);
+	if (key==SDLK_RETURN) {
+		std::pair<int, int> focus = view->get_focus();
+		if (focus.first==0 && focus.second < pending_orders_.size()) {
+			Order o = pending_orders_.at(focus.second);
+			o.is_accepted = true;
+			o.is_delivering = false;
+			pending_orders_.erase(std::next(pending_orders_.begin(), focus.second));
+			accepted_orders_.push_back(o);
+			view->set_pending_orders(pending_orders_);
+			view->set_accepted_orders(accepted_orders_);
+			return true;
+		} else {
+			return false;
+		}
+	} else {
+		return view->handle_keypress(key);
+	}
+
+}
+
+void OrderController::pickup_order(Location store) {
+	for (auto &o : accepted_orders_) {
+		if (o.store==store) {
+			o.is_delivering = true;
+		}
+	}
+}
+void OrderController::deliver_order(Location client) {
+	for (auto it = accepted_orders_.begin(); it!=accepted_orders_.end();) {
+		if (it->client==client && it->is_delivering) {
+			add_income(it->income);
+			it = accepted_orders_.erase(it);
+		} else {
+			it++;
+		}
+	}
+}
+void OrderController::add_income(int delta) {
+	current_income_ += delta;
 }

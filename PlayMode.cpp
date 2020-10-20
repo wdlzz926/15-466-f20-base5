@@ -119,7 +119,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			|| evt.key.keysym.sym == SDLK_DOWN
 			|| evt.key.keysym.sym == SDLK_RETURN
 			) {
-			return order_controller.handle_keypress(evt.key.keysym.sym);
+			return order_controller->handle_keypress(evt.key.keysym.sym);
 		}
 	} else if (evt.type == SDL_KEYUP) {
 		if (evt.key.keysym.sym == SDLK_a) {
@@ -398,6 +398,6 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 			glm::u8vec4(0xff, 0xff, 0xff, 0x00));
 	}
-	order_controller.draw();
+	order_controller->draw();
 	GL_ERRORS();
 }
