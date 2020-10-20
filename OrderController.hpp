@@ -14,8 +14,11 @@ public:
 	void pickup_order(Location store);
 	void deliver_order(Location client);
 	void add_income(int delta);
-	int current_income_ = 0;
 	std::vector<Order> pending_orders_;
 	std::vector<Order> accepted_orders_;
+private:
+	void generate_new_pending_order();
+	int current_income_ = 0;
 	std::shared_ptr<view::OrderSideBarView> view;
+	float next_order_remaining_time = 0.0;
 };

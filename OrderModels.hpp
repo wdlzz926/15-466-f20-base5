@@ -16,6 +16,10 @@ glm::u8vec4 get_location_color(Location loc);
 
 std::string get_location_name(Location loc);
 
+Location get_random_store();
+
+Location get_random_client();
+
 struct Order {
     Location store;
     Location client;

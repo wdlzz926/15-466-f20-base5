@@ -1,6 +1,7 @@
 #include "OrderModels.hpp"
 
 #include <exception>
+#include "random.hpp"
 
 glm::u8vec4 get_location_color(Location loc) {
 	switch (loc) {
@@ -29,4 +30,14 @@ glm::vec3 get_location_position(Location loc) {
 		case Location::CLIENT2: return glm::vec3(1.0f, 1.0f, 0.0f);
 		default: throw std::invalid_argument("loc not recognized");
 	}
+}
+
+using Random = effolkronium::random_static;
+
+Location get_random_store() {
+	return Random::get({Location::STORE1, Location::STORE2});
+}
+
+Location get_random_client() {
+	return Random::get({Location::CLIENT1, Location::CLIENT2});
 }
