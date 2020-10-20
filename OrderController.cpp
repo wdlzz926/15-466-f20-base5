@@ -13,3 +13,6 @@ OrderController::OrderController() {
 	view->set_pending_orders(pending_orders_);
 	view->set_accepted_orders(accepted_orders_);
 }
+bool OrderController::handle_keypress(SDL_Keycode key) {
+	return view->handle_keypress(key);
+}

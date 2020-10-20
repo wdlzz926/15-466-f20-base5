@@ -9,9 +9,13 @@ OrderItemView::OrderItemView(Order order) {
 	client_label_ = std::make_shared<TextSpan>();
 	remaining_time_ = std::make_shared<TextSpan>();
 	income_ = std::make_shared<TextSpan>();
+	focus_indicator_ = std::make_shared<TextSpan>();
 
-	from_label_->set_text("from: ");
-	to_label_->set_text("to: ");
+	from_label_->set_text("From: ");
+	to_label_->set_text("To: ");
+	focus_indicator_->set_font(FontFace::IBMPlexMono)
+		.set_text(">>>")
+		.set_visibility(false);
 	set_order(order);
 }
 
@@ -20,6 +24,7 @@ void OrderItemView::draw() {
 	store_label_->draw();
 	to_label_->draw();
 	client_label_->draw();
+	focus_indicator_->draw();
 	if (is_expanded_) {
 		remaining_time_->draw();
 		income_->draw();
@@ -58,7 +63,10 @@ void OrderItemView::set_position(int x, int y) {
 }
 
 void OrderItemView::redo_render() {
-	glm::u8vec4 color = has_focus_ ? glm::u8vec4(242, 118, 56, 255) : glm::u8vec4(255);
+	glm::u8vec4 color = glm::u8vec4(255);
+	int focus_width = focus_indicator_->get_width();
+	focus_indicator_->set_visibility(has_focus_)
+		.set_position(position_x - focus_width - 8, position_y);
 	from_label_->set_position(position_x, position_y)
 		.set_color(color)
 		.set_visibility(true);
@@ -140,10 +148,14 @@ void OrderSideBarView::redo_render() {
 		.set_font_size(HEADER_FONT_SIZE)
 		.set_position(1000, cursor_y);
 	cursor_y += HEADER_FONT_SIZE;
-	cursor_y += 4; // padding after header
+	cursor_y += 8; // padding after header
 	for (size_t i = 0; i < pending_orders_.size(); i++) {
+		bool is_on_focus = (current_hover_panel_ == 0 && current_hover_item_ == (int)i);
 		pending_orders_.at(i).set_position(1000, cursor_y);
+		pending_orders_.at(i).set_focus_state(is_on_focus);
+		pending_orders_.at(i).set_expansion_state(is_on_focus);
 		cursor_y += pending_orders_.at(i).get_height();
+		cursor_y += 16; // padding
 	}
 	cursor_y += 32; // padding between sections
 	accepted_order_label_->set_text("Accepted Orders")
@@ -151,12 +163,45 @@ void OrderSideBarView::redo_render() {
 		.set_font_size(HEADER_FONT_SIZE)
 		.set_position(1000, cursor_y);
 	cursor_y += HEADER_FONT_SIZE;
-	cursor_y += 4; // padding after header
+	cursor_y += 16; // padding after header
 
 	for (size_t i = 0; i < accepted_orders_.size(); i++) {
+		bool is_on_focus = (current_hover_panel_ == 1 && current_hover_item_ == (int)i);
 		accepted_orders_.at(i).set_position(1000, cursor_y);
+		accepted_orders_.at(i).set_focus_state(is_on_focus);
+		accepted_orders_.at(i).set_expansion_state(is_on_focus);
 		cursor_y += accepted_orders_.at(i).get_height();
+		cursor_y += 8; // padding
 	}
+}
+
+bool OrderSideBarView::handle_keypress(SDL_Keycode key) {
+	if (key==SDLK_UP) {
+		if (current_hover_panel_==1 && current_hover_item_==0) {
+			current_hover_panel_ = 0;
+			current_hover_item_ = std::max<int>((int) pending_orders_.size() - 1, 0);
+		} else {
+			current_hover_item_ = std::max<int>(current_hover_item_ - 1, 0);
+		}
+		redo_render();
+		return true;
+	} else if (key==SDLK_DOWN) {
+		if (current_hover_panel_==0
+		    && current_hover_item_ >= (int) pending_orders_.size() - 1
+		    && !accepted_orders_.empty()) {
+			current_hover_panel_ = 1;
+			current_hover_item_ = 0;
+		} else {
+			if (current_hover_panel_==0) {
+				current_hover_item_ = std::min<int>(current_hover_item_ + 1, (int) pending_orders_.size() - 1);
+			} else {
+				current_hover_item_ = std::min<int>(current_hover_item_ + 1, (int) accepted_orders_.size() - 1);
+			}
+		}
+		redo_render();
+		return true;
+	}
+	return false;
 }
 
 }

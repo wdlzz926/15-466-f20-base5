@@ -38,6 +38,7 @@ private:
 enum class FontFace {
 	ComputerModernRegular,
 	IBMPlexMono,
+	IBMPlexSans
 };
 
 /**
@@ -137,7 +138,7 @@ private:
 
 	//  ---- data fields that directly relates to setters ---
 	std::string text_;
-	FontFace font_ = FontFace::ComputerModernRegular;
+	FontFace font_ = FontFace::IBMPlexSans;
 	unsigned font_size_ = 16; //< font size in "logical pixel"
 	glm::ivec2 position_ = glm::ivec2(0, 0);
 	glm::u8vec4 color_ = glm::u8vec4(255);
