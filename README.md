@@ -4,14 +4,14 @@ Author:
  - Xiaoqiao Xu, Zhengyang Xia, Zizhuo Lin
 
 Design:
- - Play as a food delivery person to delivery Cheesecake and pancake around the neighbourhood. Drive or walk to deliver the orders within the time limit.
+ - Play as a food delivery person to delivery different foods around the neighbourhood. You can drive your car or walk to the destinations. Choose the quickest way to deliver the orders to hungry clients!
 
 Screen Shot:
 
 ![Screen Shot](screenshot.png)
 
 How To Play:
- - Move with W,A,S,D. Use Up, Down, Left, Right to select order on the side bar. Press Enter to accept pending order. Press E to pick up order from store or delivery to client when you are near by. Earh as much income as you can.
+ - Move with W,A,S,D. Use Up, Down to select orders on the side bar. Press Enter to accept a pending order. Press F to get out of or back into your car. Press E to pick up order(s) from a restaurant or delivery to a client when you are near by. Earn as much income as you can.
 
 Sources:
  - Road, grass and house parts by Jim McCann from city.blend
