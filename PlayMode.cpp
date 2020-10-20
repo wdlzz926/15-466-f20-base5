@@ -126,6 +126,8 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			return true;
 		} else if (evt.key.keysym.sym == SDLK_f) {
 			switch_camera();
+		} else if (evt.key.keysym.sym == SDLK_e) {
+			update_order();
 		}
 	} 
 	else if (evt.type == SDL_MOUSEBUTTONDOWN) {
@@ -154,6 +156,28 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	}
 
 	return false;
+}
+
+void PlayMode::update_order(){
+	glm::vec3 playerLocation;
+	if (driving)
+		playerLocation = car.transform->position;
+	else
+		playerLocation = walker.transform->position;
+	std::vector<Order> acceptedOrders = order_controller.accepted_orders_;
+	for (Order o : acceptedOrders){
+		if (o.is_delivering){
+			if (glm::distance(playerLocation, get_location_position(o.client)) < enterDis){
+				//order_controller.deliver_order(o.client);
+				std::cout << "deliver order" << std::endl;
+			}
+		} else {
+			if (glm::distance(playerLocation, get_location_position(o.store)) < enterDis){
+				// order_controller.pickup_order(o.store);
+				std::cout << "pickup order" << std::endl;
+			}
+		}
+	}
 }
 
 void PlayMode::switch_camera(){
@@ -236,72 +260,76 @@ void PlayMode::update(float elapsed) {
 	} else {
 		move = update_walker(elapsed);
 		target = &walker;
+		if (glm::distance(walker.transform->position, car.transform->position) <= enterDis){
+			switch_camera();
+			return;
+		}
 	}
 	
 	//get move in world coordinate system:
 	// glm::vec3 current_norm = walkmesh->to_world_smooth_normal(target->at);
-		glm::vec3 remain = target->transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
+	glm::vec3 remain = target->transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
 
-		//using a for() instead of a while() here so that if walkpoint gets stuck in
-		// some awkward case, code will not infinite loop:
-		for (uint32_t iter = 0; iter < 10; ++iter) {
-			if (remain == glm::vec3(0.0f)) break;
-			WalkPoint end;
-			float time;
-			walkmesh->walk_in_triangle(target->at, remain, &end, &time);
+	//using a for() instead of a while() here so that if walkpoint gets stuck in
+	// some awkward case, code will not infinite loop:
+	for (uint32_t iter = 0; iter < 10; ++iter) {
+		if (remain == glm::vec3(0.0f)) break;
+		WalkPoint end;
+		float time;
+		walkmesh->walk_in_triangle(target->at, remain, &end, &time);
+		target->at = end;
+		if (time == 1.0f) {
+			//finished within triangle:
+			remain = glm::vec3(0.0f);
+			break;
+		}
+		//some step remains:
+		remain *= (1.0f - time);
+		//try to step over edge:
+		glm::quat rotation;
+		if (walkmesh->cross_edge(target->at, &end, &rotation)) {
+			//stepped to a new triangle:
 			target->at = end;
-			if (time == 1.0f) {
-				//finished within triangle:
-				remain = glm::vec3(0.0f);
-				break;
-			}
-			//some step remains:
-			remain *= (1.0f - time);
-			//try to step over edge:
-			glm::quat rotation;
-			if (walkmesh->cross_edge(target->at, &end, &rotation)) {
-				//stepped to a new triangle:
-				target->at = end;
-				//rotate step to follow surface:
-				remain = rotation * remain;
+			//rotate step to follow surface:
+			remain = rotation * remain;
+		} else {
+			//ran into a wall, bounce / slide along it:
+			glm::vec3 const &a = walkmesh->vertices[target->at.indices.x];
+			glm::vec3 const &b = walkmesh->vertices[target->at.indices.y];
+			glm::vec3 const &c = walkmesh->vertices[target->at.indices.z];
+			glm::vec3 along = glm::normalize(b-a);
+			glm::vec3 normal = glm::normalize(glm::cross(b-a, c-a));
+			glm::vec3 in = glm::cross(normal, along);
+
+			//check how much 'remain' is pointing out of the triangle:
+			float d = glm::dot(remain, in);
+			if (d < 0.0f) {
+				//bounce off of the wall:
+				remain += (-1.25f * d) * in;
 			} else {
-				//ran into a wall, bounce / slide along it:
-				glm::vec3 const &a = walkmesh->vertices[target->at.indices.x];
-				glm::vec3 const &b = walkmesh->vertices[target->at.indices.y];
-				glm::vec3 const &c = walkmesh->vertices[target->at.indices.z];
-				glm::vec3 along = glm::normalize(b-a);
-				glm::vec3 normal = glm::normalize(glm::cross(b-a, c-a));
-				glm::vec3 in = glm::cross(normal, along);
-
-				//check how much 'remain' is pointing out of the triangle:
-				float d = glm::dot(remain, in);
-				if (d < 0.0f) {
-					//bounce off of the wall:
-					remain += (-1.25f * d) * in;
-				} else {
-					//if it's just pointing along the edge, bend slightly away from wall:
-					remain += 0.01f * d * in;
-				}
+				//if it's just pointing along the edge, bend slightly away from wall:
+				remain += 0.01f * d * in;
 			}
 		}
+	}
 
-		if (remain != glm::vec3(0.0f)) {
-			std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
-		}
+	if (remain != glm::vec3(0.0f)) {
+		std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
+	}
 
-		//update car's position to respect walking:
-		target->transform->position = walkmesh->to_world_point(target->at);
-	
-		{ //update car's rotation to respect local (smooth) up-vector:
-			
-			glm::quat adjust = glm::rotation(
-				target->transform->rotation * glm::vec3(0.0f, 0.0f, 1.0f), //current up vector
-				// current_norm,
-				walkmesh->to_world_smooth_normal(target->at) //smoothed up vector at walk location
-			);
-			target->transform->rotation = glm::normalize(adjust * target->transform->rotation);
+	//update car's position to respect walking:
+	target->transform->position = walkmesh->to_world_point(target->at);
+
+	{ //update car's rotation to respect local (smooth) up-vector:
 		
-		}
+		glm::quat adjust = glm::rotation(
+			target->transform->rotation * glm::vec3(0.0f, 0.0f, 1.0f), //current up vector
+			// current_norm,
+			walkmesh->to_world_smooth_normal(target->at) //smoothed up vector at walk location
+		);
+		target->transform->rotation = glm::normalize(adjust * target->transform->rotation);
+	
+	}
 	//reset button press counters:
 	left.downs = 0;
 	right.downs = 0;

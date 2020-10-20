@@ -18,6 +18,7 @@ struct PlayMode : Mode {
 	virtual void update(float elapsed) override;
 	virtual void draw(glm::uvec2 const &drawable_size) override;
 	void switch_camera();
+	void update_order();
 	glm::vec2 update_walker(float elapsed);
 	glm::vec2 update_car(float elapsed);
 	const float friction = 1.5f;
