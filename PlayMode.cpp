@@ -13,23 +13,23 @@
 
 #include <random>
 
-GLuint phonebank_meshes_for_lit_color_texture_program = 0;
-Load< MeshBuffer > phonebank_meshes(LoadTagDefault, []() -> MeshBuffer const * {
+GLuint delivery_meshes_for_lit_color_texture_program = 0;
+Load< MeshBuffer > delivery_meshes(LoadTagDefault, []() -> MeshBuffer const * {
 	MeshBuffer const *ret = new MeshBuffer(data_path("delivery.pnct"));
-	phonebank_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
+	delivery_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
 	return ret;
 });
 
-Load< Scene > phonebank_scene(LoadTagDefault, []() -> Scene const * {
+Load< Scene > delivery_scene(LoadTagDefault, []() -> Scene const * {
 	return new Scene(data_path("delivery.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
-		Mesh const &mesh = phonebank_meshes->lookup(mesh_name);
+		Mesh const &mesh = delivery_meshes->lookup(mesh_name);
 
 		scene.drawables.emplace_back(transform);
 		Scene::Drawable &drawable = scene.drawables.back();
 
 		drawable.pipeline = lit_color_texture_program_pipeline;
 
-		drawable.pipeline.vao = phonebank_meshes_for_lit_color_texture_program;
+		drawable.pipeline.vao = delivery_meshes_for_lit_color_texture_program;
 		drawable.pipeline.type = mesh.type;
 		drawable.pipeline.start = mesh.start;
 		drawable.pipeline.count = mesh.count;
@@ -38,15 +38,14 @@ Load< Scene > phonebank_scene(LoadTagDefault, []() -> Scene const * {
 });
 
 WalkMesh const *walkmesh = nullptr;
-WalkMesh const *carmesh = nullptr;
-Load< WalkMeshes > phonebank_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
+Load< WalkMeshes > delivery_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
 	WalkMeshes *ret = new WalkMeshes(data_path("delivery.w"));
-	walkmesh = &ret->lookup("WalkMesh");
-	carmesh = &ret->lookup("ZMesh");
+	// walkmesh = &ret->lookup("WalkMesh");
+	walkmesh = &ret->lookup("ZMesh");
 	return ret;
 });
 
-PlayMode::PlayMode() : scene(*phonebank_scene) {
+PlayMode::PlayMode() : scene(*delivery_scene) {
 	//create a car transform:
 	scene.transforms.emplace_back();
 	car.transform = &scene.transforms.back();
@@ -115,6 +114,12 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			down.downs += 1;
 			down.pressed = true;
 			return true;
+		} else if (
+			evt.key.keysym.sym == SDLK_UP
+			|| evt.key.keysym.sym == SDLK_DOWN
+			|| evt.key.keysym.sym == SDLK_RETURN
+			) {
+			return order_controller.handle_keypress(evt.key.keysym.sym);
 		}
 	} else if (evt.type == SDL_KEYUP) {
 		if (evt.key.keysym.sym == SDLK_a) {
@@ -188,10 +193,12 @@ void PlayMode::update_order(){
 void PlayMode::switch_camera(){
 	if (driving){
 		walker.transform->position = car.transform->position;
+		walkmesh = &(delivery_walkmeshes->lookup("WalkMesh"));
 		walker.at = walkmesh->nearest_walk_point(walker.transform->position);
 	} else {
 		if (glm::distance(walker.transform->position, car.transform->position) > enterDis)
 			return;
+		walkmesh = &(delivery_walkmeshes->lookup("ZMesh"));
 	}
 	driving = !driving;
 }

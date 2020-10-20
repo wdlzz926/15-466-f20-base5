@@ -8,7 +8,7 @@ class OrderController {
 public:
 	OrderController();
 	void update(float elapsed);
-	bool handle_event();
+	bool handle_keypress(SDL_Keycode key);
 	void draw();
 	const Order &get_current_active_order();
 	void pickup_order(Location store);

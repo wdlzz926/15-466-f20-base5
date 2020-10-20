@@ -32,6 +32,7 @@ private:
 	TextSpanPtr client_label_;
 	TextSpanPtr remaining_time_;
 	TextSpanPtr income_;
+	TextSpanPtr focus_indicator_;
 };
 
 class OrderSideBarView {
@@ -41,6 +42,7 @@ public:
 	void set_accepted_orders(const std::vector<Order> &accepted_orders);
 	void draw();
 	void redo_render();
+	bool handle_keypress(SDL_Keycode key);
 
 private:
 	static constexpr int HEADER_FONT_SIZE = 32;
@@ -49,5 +51,10 @@ private:
 	std::vector<OrderItemView> pending_orders_;
 	TextSpanPtr accepted_order_label_;
 	std::vector<OrderItemView> accepted_orders_;
+
+	// current_hover_panel_: 0 means pending order panel is in hover state
+	// 1 means accepted order panel is in hover state
+	int current_hover_panel_ = 0;
+	int current_hover_item_ = 0;
 };
 }
