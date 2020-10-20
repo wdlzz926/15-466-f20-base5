@@ -43,6 +43,8 @@ public:
 	void draw();
 	void redo_render();
 	bool handle_keypress(SDL_Keycode key);
+	std::pair<int, int> get_focus() const;
+
 
 private:
 	static constexpr int HEADER_FONT_SIZE = 32;
