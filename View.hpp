@@ -112,6 +112,8 @@ public:
 	TextSpan &set_animation(float speed, std::optional<std::function<void()>> callback);
 	TextSpan &set_visibility(bool value);
 
+	int get_width();
+
 	/**
 	 * redo_shape: this function should be called when new call to hb_shape() is needed.
 	 *
@@ -211,6 +213,23 @@ private:
 	std::vector<std::shared_ptr<TextSpan>> lines_;
 	std::optional<float> animation_speed_;
 	std::optional<std::function<void()>> callback_;
+};
+
+/**
+ * Not implemented yet.
+ */
+class Rectangle{
+public:
+	Rectangle() {};
+	Rectangle(glm::ivec2 position, glm::ivec2 size);
+	void draw();
+	void set_visibility(bool value);
+	void set_position(glm::ivec2 position);
+	void set_size(glm::ivec2 size);
+private:
+	bool visibility_ = false;
+	glm::ivec2 position_ = glm::ivec2(0, 0);
+	glm::ivec2 size_ = glm::ivec2(0, 0);
 };
 
 }

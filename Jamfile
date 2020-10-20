@@ -110,6 +110,9 @@ GAME_NAMES =
 	load_wav
 	load_opus
 	View
+	OrderViews
+	OrderModels
+	OrderController
 	;
 
 COMMON_NAMES =

@@ -8,6 +8,7 @@
 #include "View.hpp"
 #include "Load.hpp"
 #include "data_path.hpp"
+#include "ColorTextureProgram.hpp"
 
 namespace view {
 
@@ -421,6 +422,16 @@ TextSpan &TextSpan::set_visibility(bool value) {
 	return *this;
 }
 
+int TextSpan::get_width() {
+	do_render();
+	float width = 0.0f;
+	for (size_t i = 0; i < glyph_count_; ++i) {
+		float x_advance = glyph_pos_[i].x_advance / 64.0f;
+		width += x_advance / ViewContext::get().scale_factor_;
+	}
+	return (int) lround(width);
+}
+
 void TextSpan::undo_render() {
 	if (!text_is_rendered_) { return; }
 	GlyphTextureCache *cache = GlyphTextureCache::get_instance();
@@ -559,5 +570,52 @@ TextBox &TextBox::show() {
 	}
 	return *this;
 }
+
+Rectangle::Rectangle(glm::ivec2 position, glm::ivec2 size)
+	: visibility_{true},
+	position_{position},
+	size_{size} {}
+
+void Rectangle::set_visibility(bool value) { visibility_ = value; }
+void Rectangle::set_position(glm::ivec2 position) { position_ = position; }
+void Rectangle::set_size(glm::ivec2 size) { size_ = size; }
+//void Rectangle::draw() {
+//	if (!visibility_) { return; }
+//	glEnable(GL_BLEND);
+//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//	//don't use the depth test:
+//	glDisable(GL_DEPTH_TEST);
+//
+//	//upload vertices to vertex_buffer:
+//	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer); //set vertex_buffer as current
+//	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vertices[0]), vertices.data(), GL_STREAM_DRAW); //upload vertices array
+//	glBindBuffer(GL_ARRAY_BUFFER, 0);
+//
+//	//set color_texture_program as current program:
+//	glUseProgram(color_texture_program->program);
+//
+//	//upload OBJECT_TO_CLIP to the proper uniform location:
+//	glUniformMatrix4fv(color_texture_program->OBJECT_TO_CLIP_mat4, 1, GL_FALSE, glm::value_ptr(court_to_clip));
+//
+//	//use the mapping vertex_buffer_for_color_texture_program to fetch vertex data:
+//	glBindVertexArray(vertex_buffer_for_color_texture_program);
+//
+//	//bind the solid white texture to location zero so things will be drawn just with their colors:
+//	glActiveTexture(GL_TEXTURE0);
+//	glBindTexture(GL_TEXTURE_2D, white_tex);
+//
+//	//run the OpenGL pipeline:
+//	glDrawArrays(GL_TRIANGLES, 0, GLsizei(vertices.size()));
+//
+//	//unbind the solid white texture:
+//	glBindTexture(GL_TEXTURE_2D, 0);
+//
+//	//reset vertex array to none:
+//	glBindVertexArray(0);
+//
+//	//reset current program to none:
+//	glUseProgram(0);
+//
+//}
 
 }
