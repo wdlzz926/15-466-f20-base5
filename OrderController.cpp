@@ -18,7 +18,7 @@ OrderController::OrderController() {
 bool OrderController::handle_keypress(SDL_Keycode key) {
 	if (key==SDLK_RETURN) {
 		std::pair<int, int> focus = view->get_focus();
-		if (focus.first==0 && focus.second < pending_orders_.size()) {
+		if (focus.first==0 && focus.second < (int) pending_orders_.size()) {
 			Order o = pending_orders_.at(focus.second);
 			o.is_accepted = true;
 			o.is_delivering = false;

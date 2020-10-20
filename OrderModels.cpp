@@ -5,18 +5,18 @@
 
 glm::u8vec4 get_location_color(Location loc) {
 	switch (loc) {
-		case Location::STORE1: return glm::u8vec4(255, 0, 0, 255);
-		case Location::STORE2: return glm::u8vec4(255, 255, 0, 255);
-		case Location::CLIENT1: return glm::u8vec4(255, 0, 255, 255);
-		case Location::CLIENT2: return glm::u8vec4(0, 255, 255, 255);
-		case Location::CLIENT3: return glm::u8vec4(0, 255, 255, 255);
+		case Location::STORE_CHEESECAKE: return glm::u8vec4(0xEB, 0xE1, 0x60, 0xff);
+		case Location::STORE_PANCAKE: return glm::u8vec4(0xC0, 0xDF, 0xDD, 0xff);
+		case Location::CLIENT1: return glm::u8vec4(0xc4, 0xfa, 0x89, 0xff);
+		case Location::CLIENT2: return glm::u8vec4(0x44, 0xbd, 0xd8, 0xff);
+		case Location::CLIENT3: return glm::u8vec4(0xea, 0xe8, 0x61, 0xff);
 		default: throw std::invalid_argument("loc not recognized");
 	}
 }
 std::string get_location_name(Location loc) {
 	switch (loc) {
-		case Location::STORE1: return "store1";
-		case Location::STORE2: return "store2";
+		case Location::STORE_CHEESECAKE: return "Cheesecake Workshop";
+		case Location::STORE_PANCAKE: return "Tartan Pancakes";
 		case Location::CLIENT1: return "client1";
 		case Location::CLIENT2: return "client2";
 		case Location::CLIENT3: return "client3";
@@ -26,8 +26,8 @@ std::string get_location_name(Location loc) {
 
 glm::vec3 get_location_position(Location loc) {
 	switch (loc) {
-		case Location::STORE1: return glm::vec3(-3.0f, -3.0f, 0.0f);
-		case Location::STORE2: return glm::vec3(17.0f, 0.0f, 0.0f);
+		case Location::STORE_CHEESECAKE: return glm::vec3(-3.0f, -3.0f, 0.0f);
+		case Location::STORE_PANCAKE: return glm::vec3(17.0f, 0.0f, 0.0f);
 		case Location::CLIENT1: return glm::vec3(-9.0f, 11.0f, 0.0f);
 		case Location::CLIENT2: return glm::vec3(6.0f, 11.0f, 0.0f);
 		case Location::CLIENT3: return glm::vec3(10.0f, -11.0f, 0.0f);
@@ -38,9 +38,9 @@ glm::vec3 get_location_position(Location loc) {
 using Random = effolkronium::random_static;
 
 Location get_random_store() {
-	return Random::get({Location::STORE1, Location::STORE2});
+	return Random::get({Location::STORE_CHEESECAKE, Location::STORE_PANCAKE});
 }
 
 Location get_random_client() {
-	return Random::get({Location::CLIENT1, Location::CLIENT2});
+	return Random::get({Location::CLIENT1, Location::CLIENT2, Location::CLIENT3});
 }

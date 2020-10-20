@@ -17,5 +17,7 @@ Road, grass and house parts by Jim McCann from city.blend
 Cake and pancake model by Yixin He from brunch.blend
 Car model from https://kenney.nl/assets/car-kit
 
+- C++ Library: https://github.com/effolkronium/random
+
 This game was built with [NEST](NEST.md).
 

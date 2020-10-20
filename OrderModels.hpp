@@ -4,8 +4,8 @@
 #include <string>
 
 enum class Location {
-    STORE1,
-    STORE2,
+    STORE_CHEESECAKE,
+    STORE_PANCAKE,
     CLIENT1,
     CLIENT2,
     CLIENT3
